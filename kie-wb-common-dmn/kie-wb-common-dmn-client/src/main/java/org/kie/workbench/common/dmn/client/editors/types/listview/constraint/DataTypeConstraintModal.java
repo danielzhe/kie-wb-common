@@ -21,10 +21,12 @@ import java.util.function.BiConsumer;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
 import org.kie.workbench.common.dmn.api.definition.v1_1.ConstraintType;
 import org.kie.workbench.common.dmn.client.editors.types.listview.constraint.common.DataTypeConstraintComponent;
+import org.kie.workbench.common.dmn.client.editors.types.listview.constraint.common.DataTypeConstraintParserWarningEvent;
 import org.kie.workbench.common.dmn.client.editors.types.listview.constraint.enumeration.DataTypeConstraintEnumeration;
 import org.kie.workbench.common.dmn.client.editors.types.listview.constraint.expression.DataTypeConstraintExpression;
 import org.kie.workbench.common.dmn.client.editors.types.listview.constraint.range.DataTypeConstraintRange;
@@ -110,11 +112,8 @@ public class DataTypeConstraintModal extends Elemental2Modal<DataTypeConstraintM
         prepareView(type, value, constraintType);
     }
 
-    void setupComponent(ConstraintType constraintType) {
-        if (constraintType == null) {
-            constraintType = inferComponentType(getConstraintValue());
-        }
-        this.constraintType = constraintType;
+    void setupComponent(final ConstraintType type) {
+        constraintType = Optional.ofNullable(type).orElse(inferComponentType(getConstraintValue()));
         currentComponent = getComponentByType(constraintType);
         currentComponent.setValue(getConstraintValue());
     }
@@ -161,7 +160,7 @@ public class DataTypeConstraintModal extends Elemental2Modal<DataTypeConstraintM
         return constraintType;
     }
 
-    public void setConstraintType(final ConstraintType constraintType) {
+    void setConstraintType(final ConstraintType constraintType) {
         this.constraintType = constraintType;
     }
 
@@ -201,6 +200,10 @@ public class DataTypeConstraintModal extends Elemental2Modal<DataTypeConstraintM
 
     void superShow() {
         super.show();
+    }
+
+    void onDataTypeConstraintParserWarningEvent(final @Observes DataTypeConstraintParserWarningEvent e) {
+        getView().showConstraintWarningMessage();
     }
 
     private DataTypeConstraintEnumeration getConstraintEnumeration() {
@@ -244,5 +247,7 @@ public class DataTypeConstraintModal extends Elemental2Modal<DataTypeConstraintM
         void enableOkButton();
 
         void disableOkButton();
+
+        void showConstraintWarningMessage();
     }
 }
