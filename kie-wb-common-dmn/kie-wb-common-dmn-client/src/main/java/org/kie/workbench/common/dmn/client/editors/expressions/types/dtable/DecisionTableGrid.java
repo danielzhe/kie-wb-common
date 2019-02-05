@@ -59,7 +59,6 @@ import org.kie.workbench.common.dmn.client.editors.types.NameAndDataTypePopoverV
 import org.kie.workbench.common.dmn.client.resources.i18n.DMNEditorConstants;
 import org.kie.workbench.common.dmn.client.widgets.grid.BaseExpressionGrid;
 import org.kie.workbench.common.dmn.client.widgets.grid.columns.factory.TextAreaSingletonDOMElementFactory;
-import org.kie.workbench.common.dmn.client.widgets.grid.columns.factory.TextBoxSingletonDOMElementFactory;
 import org.kie.workbench.common.dmn.client.widgets.grid.controls.container.CellEditorControlsView;
 import org.kie.workbench.common.dmn.client.widgets.grid.controls.list.HasListSelectorControl;
 import org.kie.workbench.common.dmn.client.widgets.grid.controls.list.ListSelectorView;
@@ -96,7 +95,6 @@ public class DecisionTableGrid extends BaseExpressionGrid<DecisionTable, Decisio
     private final HitPolicyPopoverView.Presenter hitPolicyEditor;
     private final NameAndDataTypePopoverView.Presenter headerEditor;
 
-    private final TextBoxSingletonDOMElementFactory textBoxFactory = getBodyTextBoxFactory();
     private final TextAreaSingletonDOMElementFactory textAreaFactory = getBodyTextAreaFactory();
 
     private class ListSelectorItemDefinition {
@@ -189,7 +187,7 @@ public class DecisionTableGrid extends BaseExpressionGrid<DecisionTable, Decisio
             e.getOutput().forEach(oc -> model.appendColumn(makeOutputClauseColumn(oc)));
             model.appendColumn(new DescriptionColumn(new BaseHeaderMetaData(translationService.format(DMNEditorConstants.DecisionTableEditor_DescriptionColumnHeader),
                                                                             DESCRIPTION_GROUP),
-                                                     textBoxFactory,
+                                                     textAreaFactory,
                                                      this));
         });
 
@@ -473,6 +471,13 @@ public class DecisionTableGrid extends BaseExpressionGrid<DecisionTable, Decisio
                  new ListSelectorItemDefinition(translationService.format(DMNEditorConstants.DecisionTableEditor_DeleteDecisionRule),
                                                 !isMultiRow && dtable.getRule().size() > 1,
                                                 () -> deleteDecisionRule(uiRowIndex)));
+
+        items.add(ListSelectorTextItem.build(translationService.format(DMNEditorConstants.DecisionTableEditor_DuplicateDecisionRule),
+                                             !isMultiRow,
+                                             () -> {
+                                                 cellEditorControls.hide();
+                                                 duplicateDecisionRule(uiRowIndex);
+                                             }));
     }
 
     @Override
@@ -552,9 +557,10 @@ public class DecisionTableGrid extends BaseExpressionGrid<DecisionTable, Decisio
     void addDecisionRule(final int index) {
         expression.ifPresent(dtable -> {
             final GridRow decisionTableRow = makeDecisionTableRow();
+            final DecisionRule decisionRule = DecisionRuleFactory.makeDecisionRule(dtable);
             sessionCommandManager.execute((AbstractCanvasHandler) sessionManager.getCurrentSession().getCanvasHandler(),
                                           new AddDecisionRuleCommand(dtable,
-                                                                     new DecisionRule(),
+                                                                     decisionRule,
                                                                      model,
                                                                      decisionTableRow,
                                                                      index,
@@ -570,6 +576,21 @@ public class DecisionTableGrid extends BaseExpressionGrid<DecisionTable, Decisio
                                                                         model,
                                                                         index,
                                                                         () -> resize(BaseExpressionGrid.RESIZE_EXISTING)));
+        });
+    }
+
+    void duplicateDecisionRule(final int index) {
+        expression.ifPresent(dtable -> {
+            final GridRow decisionTableRow = makeDecisionTableRow();
+            final DecisionRule decisionRule = DecisionRuleFactory.duplicateDecisionRule(index, dtable);
+            sessionCommandManager.execute((AbstractCanvasHandler) sessionManager.getCurrentSession().getCanvasHandler(),
+                                          new AddDecisionRuleCommand(dtable,
+                                                                     decisionRule,
+                                                                     model,
+                                                                     decisionTableRow,
+                                                                     index,
+                                                                     uiModelMapper,
+                                                                     () -> resize(BaseExpressionGrid.RESIZE_EXISTING)));
         });
     }
 
