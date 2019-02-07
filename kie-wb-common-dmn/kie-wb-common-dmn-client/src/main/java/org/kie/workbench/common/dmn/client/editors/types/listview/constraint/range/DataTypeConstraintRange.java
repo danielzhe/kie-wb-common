@@ -18,12 +18,19 @@ package org.kie.workbench.common.dmn.client.editors.types.listview.constraint.ra
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.Dependent;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 import elemental2.dom.Element;
+import org.jboss.errai.common.client.api.Caller;
+import org.jboss.errai.common.client.api.ErrorCallback;
+import org.jboss.errai.common.client.api.RemoteCallback;
 import org.jboss.errai.ui.client.local.api.elemental2.IsElement;
+import org.kie.workbench.common.dmn.api.editors.types.DMNParseService;
+import org.kie.workbench.common.dmn.api.editors.types.RangeValue;
 import org.kie.workbench.common.dmn.client.editors.types.listview.constraint.DataTypeConstraintModal;
 import org.kie.workbench.common.dmn.client.editors.types.listview.constraint.common.DataTypeConstraintComponent;
+import org.kie.workbench.common.dmn.client.editors.types.listview.constraint.common.DataTypeConstraintParserWarningEvent;
 import org.kie.workbench.common.stunner.core.util.StringUtils;
 import org.uberfire.client.mvp.UberElemental;
 
@@ -34,9 +41,17 @@ public class DataTypeConstraintRange implements DataTypeConstraintComponent {
 
     private DataTypeConstraintModal modal;
 
+    private final Caller<DMNParseService> service;
+
+    private final Event<DataTypeConstraintParserWarningEvent> parserWarningEvent;
+
     @Inject
-    public DataTypeConstraintRange(final View view) {
+    public DataTypeConstraintRange(final View view,
+                                   final Caller<DMNParseService> service,
+                                   final Event<DataTypeConstraintParserWarningEvent> parserWarningEvent) {
         this.view = view;
+        this.service = service;
+        this.parserWarningEvent = parserWarningEvent;
     }
 
     @PostConstruct
@@ -51,38 +66,35 @@ public class DataTypeConstraintRange implements DataTypeConstraintComponent {
 
     @Override
     public void setValue(final String value) {
-        final RangeValue rangeValue = getRangeValue(value);
+        service.call(getSuccessCallback(), getErrorCallback()).parseRangeValue(value);
+    }
+
+    ErrorCallback<Object> getErrorCallback() {
+        return (message, throwable) -> {
+            showWarningMessage();
+            loadConstraintValue(new RangeValue());
+            return true;
+        };
+    }
+
+    private void showWarningMessage() {
+        parserWarningEvent.fire(new DataTypeConstraintParserWarningEvent());
+    }
+
+    RemoteCallback<RangeValue> getSuccessCallback() {
+        return this::loadConstraintValue;
+    }
+
+    private void loadConstraintValue(final RangeValue rangeValue) {
         view.setIncludeStartValue(rangeValue.getIncludeStartValue());
         view.setStartValue(rangeValue.getStartValue());
         view.setEndValue(rangeValue.getEndValue());
         view.setIncludeEndValue(rangeValue.getIncludeEndValue());
-    }
 
-    private RangeValue getRangeValue(String value) {
-        final RangeValue rangeValue = new RangeValue();
-
-        value = value.trim();
-
-        if (StringUtils.isEmpty(value)) {
-            return rangeValue;
+        if (!StringUtils.isEmpty(rangeValue.getStartValue())
+            && !StringUtils.isEmpty(rangeValue.getEndValue())) {
+            enableOkButton();
         }
-
-        final String[] values = value.split("(\\.\\.)");
-        if (values.length != 2
-            || values[0].isEmpty()
-            || values[1].isEmpty()) {
-            return rangeValue;
-        }
-
-        final String startPart = values[0].replace("[", "").replace("(", "");
-        rangeValue.setStartValue(startPart);
-
-        final String endPart = values[1].replace("]", "").replace(")", "");
-        rangeValue.setEndValue(endPart);
-
-        rangeValue.setIncludeStartValue(value.charAt(0) == '[');
-        rangeValue.setIncludeEndValue(value.charAt(value.length() - 1) == ']');
-        return rangeValue;
     }
 
     @Override
@@ -92,81 +104,28 @@ public class DataTypeConstraintRange implements DataTypeConstraintComponent {
 
     private String getRawValue() {
         final StringBuilder builder = new StringBuilder();
-        if (view.getIncludeStartValue()) {
-            builder.append("[");
-        } else {
-            builder.append("(");
-        }
+        builder.append(view.getIncludeStartValue() ? "[" : "(");
 
         builder.append(view.getStartValue());
         builder.append("..");
         builder.append(view.getEndValue());
 
-        if (view.getIncludeEndValue()) {
-            builder.append("]");
-        } else {
-            builder.append(")");
-        }
+        builder.append(view.getIncludeEndValue() ? "]" : ")");
 
         return builder.toString();
     }
 
-   void disableOkButton() {
+    void disableOkButton() {
         modal.disableOkButton();
     }
 
-   void enableOkButton() {
+    void enableOkButton() {
         modal.enableOkButton();
     }
 
     public void setModal(final DataTypeConstraintModal modal) {
         this.modal = modal;
         disableOkButton();
-    }
-
-    private class RangeValue {
-
-        private boolean includeStartValue;
-        private String startValue;
-        private String endValue;
-        private boolean includeEndValue;
-
-        RangeValue() {
-            this.startValue = "";
-            this.endValue = "";
-        }
-
-        boolean getIncludeStartValue() {
-            return includeStartValue;
-        }
-
-        String getStartValue() {
-            return startValue;
-        }
-
-        String getEndValue() {
-            return endValue;
-        }
-
-        boolean getIncludeEndValue() {
-            return includeEndValue;
-        }
-
-        void setIncludeStartValue(final boolean includeStartValue) {
-            this.includeStartValue = includeStartValue;
-        }
-
-        void setIncludeEndValue(final boolean includeEndValue) {
-            this.includeEndValue = includeEndValue;
-        }
-
-        void setStartValue(final String startValue) {
-            this.startValue = startValue;
-        }
-
-        void setEndValue(final String endValue) {
-            this.endValue = endValue;
-        }
     }
 
     public interface View extends UberElemental<DataTypeConstraintRange>,

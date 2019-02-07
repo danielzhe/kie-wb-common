@@ -16,14 +16,24 @@
 
 package org.kie.workbench.common.dmn.client.editors.types.listview.constraint.range;
 
+import java.util.List;
+
 import com.google.gwtmockito.GwtMockitoTestRunner;
+import org.jboss.errai.common.client.api.Caller;
+import org.jboss.errai.common.client.api.ErrorCallback;
+import org.jboss.errai.common.client.api.RemoteCallback;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.kie.workbench.common.dmn.api.editors.types.DMNParseService;
 import org.kie.workbench.common.dmn.client.editors.types.listview.constraint.DataTypeConstraintModal;
+import org.kie.workbench.common.dmn.client.editors.types.listview.constraint.common.DataTypeConstraintParserWarningEvent;
 import org.mockito.Mock;
+import org.uberfire.mocks.EventSourceMock;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,13 +45,22 @@ public class DataTypeConstraintRangeTest {
     private DataTypeConstraintRange.View view;
 
     @Mock
+    private Caller<DMNParseService> serviceCaller;
+
+    @Mock
+    private DMNParseService service;
+
+    @Mock
+    private EventSourceMock<DataTypeConstraintParserWarningEvent> parserWarningEvent;
+
+    @Mock
     private DataTypeConstraintModal modal;
 
     private DataTypeConstraintRange constraintRange;
 
     @Before
     public void setup() {
-        constraintRange = new DataTypeConstraintRange(view);
+        constraintRange = spy(new DataTypeConstraintRange(view, serviceCaller, parserWarningEvent));
     }
 
     @Test
@@ -73,93 +92,18 @@ public class DataTypeConstraintRangeTest {
     }
 
     @Test
-    public void testSetUnkownValue() {
-        constraintRange.setValue("some random string");
-        verify(view).setIncludeStartValue(false);
-        verify(view).setIncludeEndValue(false);
-        verify(view).setStartValue("");
-        verify(view).setEndValue("");
-    }
-
-    @Test
-    public void testSetMalformedValue1() {
-        constraintRange.setValue("..]");
-        verify(view).setIncludeStartValue(false);
-        verify(view).setIncludeEndValue(false);
-        verify(view).setStartValue("");
-        verify(view).setEndValue("");
-    }
-
-    @Test
-    public void testSetMalformedValue2() {
-        constraintRange.setValue("asd.(.45]");
-        verify(view).setIncludeStartValue(false);
-        verify(view).setIncludeEndValue(false);
-        verify(view).setStartValue("");
-        verify(view).setEndValue("");
-    }
-
-    @Test
-    public void testSetValueWithLeadingAndTrailingSpaces() {
-        constraintRange.setValue("   [1..0]    ");
-        verify(view).setIncludeStartValue(true);
-        verify(view).setIncludeEndValue(true);
-        verify(view).setStartValue("1");
-        verify(view).setEndValue("0");
-    }
-
-    @Test
-    public void testSetEmptyValue() {
-        constraintRange.setValue("");
-        verify(view).setIncludeStartValue(false);
-        verify(view).setIncludeEndValue(false);
-        verify(view).setStartValue("");
-        verify(view).setEndValue("");
-    }
-
-    @Test
-    public void testSetValueIncludeStartExcludeEnd() {
-        constraintRange.setValue("[0..1)");
-        verify(view).setIncludeStartValue(true);
-        verify(view).setIncludeEndValue(false);
-        verify(view).setStartValue("0");
-        verify(view).setEndValue("1");
-    }
-
-    @Test
-    public void testSetValueExcludeStartIncludeEnd() {
-        constraintRange.setValue("(0..1]");
-        verify(view).setIncludeStartValue(false);
-        verify(view).setIncludeEndValue(true);
-        verify(view).setStartValue("0");
-        verify(view).setEndValue("1");
-    }
-
-    @Test
-    public void testSetValueExcludeBoth() {
-        constraintRange.setValue("(0..1)");
-        verify(view).setIncludeStartValue(false);
-        verify(view).setIncludeEndValue(false);
-        verify(view).setStartValue("0");
-        verify(view).setEndValue("1");
-    }
-
-    @Test
-    public void testSetValueIncludeBoth() {
-        constraintRange.setValue("[0..1]");
-        verify(view).setIncludeStartValue(true);
-        verify(view).setIncludeEndValue(true);
-        verify(view).setStartValue("0");
-        verify(view).setEndValue("1");
-    }
-
-    @Test
     public void testSetValue() {
-        constraintRange.setValue("[123..456]");
-        verify(view).setIncludeStartValue(true);
-        verify(view).setIncludeEndValue(true);
-        verify(view).setStartValue("123");
-        verify(view).setEndValue("456");
+        final RemoteCallback<List<String>> successCallback = (c) -> { /* Nothing. */ };
+        final ErrorCallback<Object> errorCallback = (m, t) -> true;
+        final String value = "value";
+
+        doReturn(successCallback).when(constraintRange).getSuccessCallback();
+        doReturn(errorCallback).when(constraintRange).getErrorCallback();
+        when(serviceCaller.call(successCallback, errorCallback)).thenReturn(service);
+
+        constraintRange.setValue(value);
+
+        verify(service).parseRangeValue(value);
     }
 
     @Test
