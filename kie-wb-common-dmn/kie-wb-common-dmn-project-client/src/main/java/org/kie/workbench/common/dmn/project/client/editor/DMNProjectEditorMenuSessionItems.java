@@ -20,18 +20,46 @@ import javax.enterprise.context.Dependent;
 import javax.enterprise.inject.Typed;
 import javax.inject.Inject;
 
+import org.gwtbootstrap3.client.ui.Button;
+import org.gwtbootstrap3.client.ui.constants.ButtonSize;
 import org.kie.workbench.common.dmn.api.qualifiers.DMNEditor;
 import org.kie.workbench.common.dmn.project.client.session.DMNEditorSessionCommands;
+import org.kie.workbench.common.stunner.client.widgets.menu.MenuUtils;
+import org.kie.workbench.common.stunner.core.client.session.command.impl.PerformAutomaticLayoutCommand;
+import org.kie.workbench.common.stunner.core.i18n.CoreTranslationMessages;
 import org.kie.workbench.common.stunner.project.client.editor.AbstractProjectEditorMenuSessionItems;
+import org.kie.workbench.common.widgets.client.menu.FileMenuBuilder;
+import org.uberfire.workbench.model.menu.MenuItem;
 
 @Dependent
 @Typed(DMNProjectEditorMenuSessionItems.class)
+@DMNEditor
 public class DMNProjectEditorMenuSessionItems extends AbstractProjectEditorMenuSessionItems<DMNProjectDiagramEditorMenuItemsBuilder> {
+
+    private final PerformAutomaticLayoutCommand performAutomaticLayoutCommand;
 
     @Inject
     public DMNProjectEditorMenuSessionItems(final DMNProjectDiagramEditorMenuItemsBuilder itemsBuilder,
-                                            final @DMNEditor DMNEditorSessionCommands sessionCommands) {
+                                            final @DMNEditor DMNEditorSessionCommands sessionCommands,
+                                            final PerformAutomaticLayoutCommand performAutomaticLayoutCommand) {
         super(itemsBuilder,
               sessionCommands);
+        this.performAutomaticLayoutCommand = performAutomaticLayoutCommand;
+    }
+
+    @Override
+    public void populateMenu(final FileMenuBuilder menu) {
+        super.populateMenu(menu);
+        final MenuItem performAutomaticLayoutMenuItem = newPerformAutomaticLayout();
+        menu.addNewTopLevelMenu(performAutomaticLayoutMenuItem);
+    }
+
+    private MenuItem newPerformAutomaticLayout() {
+        final MenuUtils.HasEnabledIsWidget buttonWrapper = MenuUtils.buildHasEnabledWidget(new Button() {{
+            setSize(ButtonSize.SMALL);
+            setText(getTranslationService().getValue(CoreTranslationMessages.PERFORM_AUTOMATIC_LAYOUT));
+            addClickHandler(clickEvent -> performAutomaticLayoutCommand.execute());
+        }});
+        return MenuUtils.buildItem(buttonWrapper);
     }
 }
