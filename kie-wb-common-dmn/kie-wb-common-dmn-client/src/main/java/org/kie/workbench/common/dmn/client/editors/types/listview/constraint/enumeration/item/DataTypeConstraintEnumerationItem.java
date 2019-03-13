@@ -66,6 +66,10 @@ public class DataTypeConstraintEnumerationItem {
         return value;
     }
 
+    public int getOrder(){
+        return view.getOrder();
+    }
+
     public Element getElement() {
         return view.getElement();
     }
@@ -160,5 +164,7 @@ public class DataTypeConstraintEnumerationItem {
         void hideClearButton();
 
         void showDeleteButton();
+
+        int getOrder();
     }
 }
