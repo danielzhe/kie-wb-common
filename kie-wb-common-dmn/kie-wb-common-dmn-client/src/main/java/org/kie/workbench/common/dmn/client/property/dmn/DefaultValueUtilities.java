@@ -33,6 +33,7 @@ import org.kie.workbench.common.dmn.api.definition.v1_1.TextAnnotation;
 import org.kie.workbench.common.stunner.core.graph.Graph;
 import org.kie.workbench.common.stunner.core.graph.Node;
 import org.kie.workbench.common.stunner.core.graph.content.view.View;
+import org.kie.workbench.common.stunner.core.util.StringUtils;
 
 public class DefaultValueUtilities {
 
@@ -96,6 +97,10 @@ public class DefaultValueUtilities {
 
     private static void updateDecisionDefaultName(final Graph<?, Node> graph,
                                                   final Decision decision) {
+        if(!StringUtils.isEmpty(decision.getName().getValue())) {
+            return;
+        }
+
         final String prefix = decision.getClass().getSimpleName() + "-";
         decision.getName().setValue(prefix + getMaxUnusedIndex(getExistingNodeNames(graph,
                                                                                     decision,

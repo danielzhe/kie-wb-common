@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kie.workbench.common.dmn.client.decision.factories.DecisionNavigatorItemFactory;
+import org.kie.workbench.common.dmn.client.decision.included.components.DecisionComponents;
 import org.kie.workbench.common.dmn.client.decision.tree.DecisionNavigatorTreePresenter;
 import org.kie.workbench.common.stunner.core.client.canvas.CanvasHandler;
 import org.kie.workbench.common.stunner.core.diagram.Diagram;
@@ -61,6 +62,9 @@ public class DecisionNavigatorPresenterTest {
     private DecisionNavigatorTreePresenter treePresenter;
 
     @Mock
+    private DecisionComponents decisionComponents;
+
+    @Mock
     private DecisionNavigatorObserver decisionNavigatorObserver;
 
     @Mock
@@ -78,6 +82,7 @@ public class DecisionNavigatorPresenterTest {
     public void setup() {
         presenter = spy(new DecisionNavigatorPresenter(view,
                                                        treePresenter,
+                                                       decisionComponents,
                                                        decisionNavigatorObserver,
                                                        navigatorChildrenTraverse,
                                                        itemFactory,

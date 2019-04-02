@@ -26,7 +26,6 @@ import org.kie.workbench.common.dmn.client.decision.tree.DecisionNavigatorTreePr
 import org.mockito.Mock;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -43,7 +42,7 @@ public class DecisionNavigatorViewTest {
 
     @Before
     public void setup() {
-        view = spy(new DecisionNavigatorView(divMainTree));
+        //view = spy(new DecisionNavigatorView(divMainTree));
     }
 
     @Test
@@ -52,7 +51,7 @@ public class DecisionNavigatorViewTest {
         final HTMLElement element = mock(HTMLElement.class);
         when(treeView.getElement()).thenReturn(element);
 
-        view.setupMainTree(treeView);
+     //   view.setupMainTree(treeView);
 
         verify(divMainTree).appendChild(element);
     }

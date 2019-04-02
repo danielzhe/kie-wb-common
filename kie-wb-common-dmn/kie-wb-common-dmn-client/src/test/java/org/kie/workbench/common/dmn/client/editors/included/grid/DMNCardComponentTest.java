@@ -23,8 +23,10 @@ import org.gwtbootstrap3.client.ui.constants.IconType;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.kie.workbench.common.dmn.client.decision.events.RefreshDecisionComponents;
 import org.kie.workbench.common.dmn.client.editors.included.IncludedModel;
 import org.mockito.Mock;
+import org.uberfire.mocks.EventSourceMock;
 
 import static java.util.Collections.emptyList;
 import static org.gwtbootstrap3.client.ui.constants.IconType.DOWNLOAD;
@@ -44,11 +46,14 @@ public class DMNCardComponentTest {
     @Mock
     private DMNCardComponent.ContentView contentView;
 
+    @Mock
+    private EventSourceMock<RefreshDecisionComponents> refreshDecisionComponentsEvent;
+
     private DMNCardComponent dmnCard;
 
     @Before
     public void setup() {
-        dmnCard = spy(new DMNCardComponent(contentView));
+        dmnCard = spy(new DMNCardComponent(contentView, refreshDecisionComponentsEvent));
     }
 
     @Test

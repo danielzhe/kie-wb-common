@@ -34,6 +34,7 @@ import org.kie.workbench.common.dmn.api.property.dmn.Name;
 import org.kie.workbench.common.dmn.api.property.dmn.Question;
 import org.kie.workbench.common.dmn.api.property.font.FontSet;
 import org.kie.workbench.common.dmn.api.resource.i18n.DMNAPIConstants;
+import org.kie.workbench.common.forms.adf.definitions.DynamicReadOnly;
 import org.kie.workbench.common.forms.adf.definitions.annotations.FieldParam;
 import org.kie.workbench.common.forms.adf.definitions.annotations.FormDefinition;
 import org.kie.workbench.common.forms.adf.definitions.annotations.FormField;
@@ -54,20 +55,21 @@ import static org.kie.workbench.common.forms.adf.engine.shared.formGeneration.pr
 @Bindable
 @Definition(graphFactory = NodeFactory.class, nameField = "name")
 @FormDefinition(policy = FieldPolicy.ONLY_MARKED,
-        defaultFieldSettings = {@FieldParam(name = FIELD_CONTAINER_PARAM, value = COLLAPSIBLE_CONTAINER)},
-        startElement = "id")
+    defaultFieldSettings = {@FieldParam(name = FIELD_CONTAINER_PARAM, value = COLLAPSIBLE_CONTAINER)},
+    startElement = "id")
 public class Decision extends DRGElement implements DomainObject,
                                                     HasExpression,
                                                     DMNViewDefinition<GeneralRectangleDimensionsSet>,
-                                                    HasVariable<InformationItemPrimary> {
+                                                    HasVariable<InformationItemPrimary>,
+                                                    DynamicReadOnly {
 
     @Category
     private static final String stunnerCategory = Categories.NODES;
 
     @Labels
     private static final Set<String> stunnerLabels = new Sets.Builder<String>()
-            .add("decision")
-            .build();
+                                                         .add("decision")
+                                                         .build();
 
     @Property
     @FormField(afterElement = "name")
@@ -294,5 +296,10 @@ public class Decision extends DRGElement implements DomainObject,
 
     private void setVariableParent() {
         Optional.ofNullable(variable).ifPresent(v -> v.setParent(this));
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        return getName() != null && getName().getValue().startsWith("whatever");
     }
 }
