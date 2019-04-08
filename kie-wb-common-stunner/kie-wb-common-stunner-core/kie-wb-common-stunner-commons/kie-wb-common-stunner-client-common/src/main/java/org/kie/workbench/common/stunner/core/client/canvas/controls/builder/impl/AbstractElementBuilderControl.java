@@ -233,6 +233,8 @@ public abstract class AbstractElementBuilderControl extends AbstractCanvasHandle
                                          new ServiceCallback<Element>() {
                                              @Override
                                              public void onSuccess(final Element element) {
+                                                 // TODO: need to check the drawback of this
+                                                 ((View) element.getContent()).setDefinition(definition);
                                                  getElementCommands(element,
                                                                     parent,
                                                                     getParentAssignment(parent, definition),

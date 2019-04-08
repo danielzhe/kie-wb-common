@@ -17,10 +17,12 @@
 package org.kie.workbench.common.forms.adf.processors;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.processing.Messager;
@@ -39,6 +41,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.kie.workbench.common.forms.adf.definitions.annotations.FieldParam;
 import org.kie.workbench.common.forms.adf.definitions.annotations.FormDefinition;
 import org.kie.workbench.common.forms.adf.definitions.annotations.FormField;
+import org.kie.workbench.common.forms.adf.definitions.annotations.ReadOnlyOverrides;
 import org.kie.workbench.common.forms.adf.definitions.annotations.SkipFormField;
 import org.kie.workbench.common.forms.adf.definitions.annotations.field.selector.SelectorDataProvider;
 import org.kie.workbench.common.forms.adf.definitions.annotations.i18n.I18nSettings;
@@ -180,6 +183,19 @@ public class FormDefinitionGenerator {
 
         Collection<FieldInfo> fieldInfos = FormGenerationUtils.extractFieldInfos(type, fieldElement -> filter(fieldElement, policy));
 
+        final Optional<FieldInfo> overridesField = fieldInfos.stream()
+                                                           .filter(f -> f.getFieldElement().getAnnotation(ReadOnlyOverrides.class) != null)
+                                                           .findFirst();
+
+        final String[] readOnlyOverrides;
+//        if (overridesField.isPresent()) {
+//            final FieldInfo fieldInfo = overridesField.get();
+//
+//
+//        } else {
+            readOnlyOverrides = new String[0];
+   //     }
+
         List<FormDefinitionFieldData> fieldSettings = new ArrayList<>();
 
         for (FieldInfo fieldInfo : fieldInfos) {
@@ -317,7 +333,7 @@ public class FormDefinitionGenerator {
                     }
 
                     fieldData.setRequired(Boolean.valueOf(settings.required()).toString());
-                    fieldData.setReadOnly(Boolean.valueOf(settings.readonly()).toString());
+                    fieldData.setReadOnly(isReadOnly(fieldName, readOnlyOverrides, settings)); //Boolean.valueOf(settings.readonly()).toString()
 
                     for (FieldParam fieldParam : settings.settings()) {
                         fieldData.getParams().put(fieldParam.name(), fieldParam.value());
@@ -331,7 +347,7 @@ public class FormDefinitionGenerator {
                 if (!overrideI18n) {
                     if (!isEmpty(i18nSettings.keyPreffix())) {
                         fieldData.setLabel(i18nSettings.keyPreffix() + i18nSettings.separator() + fieldData.getLabel());
-                        if(!isEmpty(fieldData.getHelpMessage())) {
+                        if (!isEmpty(fieldData.getHelpMessage())) {
                             fieldData.setHelpMessage(i18nSettings.keyPreffix() + i18nSettings.separator() + fieldData.getHelpMessage());
                         }
                     }
@@ -345,6 +361,14 @@ public class FormDefinitionGenerator {
         return fieldSettings;
     }
 
+    private String isReadOnly(final String fieldName, final String[] readOnlyOverrides, final FormField settings) {
+
+        if (Arrays.stream(readOnlyOverrides).anyMatch(fieldName::equals)) {
+            return Boolean.toString(true);
+        }
+
+        return Boolean.valueOf(settings.readonly()).toString();
+    }
 
     protected void extractFieldExtraSettings(FormDefinitionFieldData fieldData, Element fieldElement) {
         SelectorDataProvider selectorDataProvider = fieldElement.getAnnotation(SelectorDataProvider.class);
