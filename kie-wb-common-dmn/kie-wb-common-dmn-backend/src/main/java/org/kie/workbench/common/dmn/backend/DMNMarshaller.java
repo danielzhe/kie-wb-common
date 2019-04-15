@@ -41,6 +41,7 @@ import javax.xml.namespace.QName;
 
 import org.jboss.errai.marshalling.server.ServerMarshalling;
 import org.kie.dmn.backend.marshalling.v1x.DMNMarshallerFactory;
+import org.kie.dmn.model.api.Import;
 import org.kie.dmn.model.api.dmndi.Bounds;
 import org.kie.dmn.model.api.dmndi.Color;
 import org.kie.dmn.model.api.dmndi.DMNDecisionServiceDividerLine;
@@ -89,6 +90,7 @@ import org.kie.workbench.common.dmn.backend.definition.v1_1.dd.ComponentsWidthsE
 import org.kie.workbench.common.dmn.backend.definition.v1_1.dd.DMNDIExtensionsRegister;
 import org.kie.workbench.common.dmn.backend.definition.v1_1.dd.FontSetPropertyConverter;
 import org.kie.workbench.common.dmn.backend.definition.v1_1.dd.PointUtils;
+import org.kie.workbench.common.forms.adf.definitions.DynamicReadOnly;
 import org.kie.workbench.common.stunner.core.api.FactoryManager;
 import org.kie.workbench.common.stunner.core.backend.service.XMLEncoderDiagramMetadataMarshaller;
 import org.kie.workbench.common.stunner.core.definition.adapter.binding.BindableAdapterUtils;
@@ -100,6 +102,7 @@ import org.kie.workbench.common.stunner.core.graph.Edge;
 import org.kie.workbench.common.stunner.core.graph.Graph;
 import org.kie.workbench.common.stunner.core.graph.Node;
 import org.kie.workbench.common.stunner.core.graph.content.Bound;
+import org.kie.workbench.common.stunner.core.graph.content.definition.Definition;
 import org.kie.workbench.common.stunner.core.graph.content.relationship.Child;
 import org.kie.workbench.common.stunner.core.graph.content.view.Connection;
 import org.kie.workbench.common.stunner.core.graph.content.view.ControlPoint;
@@ -108,7 +111,10 @@ import org.kie.workbench.common.stunner.core.graph.content.view.Point2D;
 import org.kie.workbench.common.stunner.core.graph.content.view.View;
 import org.kie.workbench.common.stunner.core.graph.content.view.ViewConnector;
 import org.kie.workbench.common.stunner.core.graph.impl.EdgeImpl;
+import org.kie.workbench.common.stunner.core.service.DiagramService;
 import org.kie.workbench.common.stunner.core.util.UUID;
+import org.uberfire.backend.vfs.Path;
+import org.uberfire.backend.vfs.PathFactory;
 
 import static org.kie.workbench.common.dmn.backend.definition.v1_1.dd.PointUtils.heightOfShape;
 import static org.kie.workbench.common.dmn.backend.definition.v1_1.dd.PointUtils.lowerRightBound;
@@ -122,6 +128,7 @@ import static org.kie.workbench.common.dmn.backend.definition.v1_1.dd.PointUtils
 @ApplicationScoped
 public class DMNMarshaller implements DiagramMarshaller<Graph, Metadata, Diagram<Graph, Metadata>> {
 
+    private final DiagramService diagramService;
     private XMLEncoderDiagramMetadataMarshaller diagramMetadataMarshaller;
     private FactoryManager factoryManager;
     private InputDataConverter inputDataConverter;
@@ -134,12 +141,14 @@ public class DMNMarshaller implements DiagramMarshaller<Graph, Metadata, Diagram
 
     protected DMNMarshaller() {
         this(null,
+             null,
              null);
     }
 
     @Inject
     public DMNMarshaller(final XMLEncoderDiagramMetadataMarshaller diagramMetadataMarshaller,
-                         final FactoryManager factoryManager) {
+                         final FactoryManager factoryManager,
+                         final DiagramService diagramService) {
         this.diagramMetadataMarshaller = diagramMetadataMarshaller;
         this.factoryManager = factoryManager;
         this.inputDataConverter = new InputDataConverter(factoryManager);
@@ -149,6 +158,7 @@ public class DMNMarshaller implements DiagramMarshaller<Graph, Metadata, Diagram
         this.textAnnotationConverter = new TextAnnotationConverter(factoryManager);
         this.decisionServiceConverter = new DecisionServiceConverter(factoryManager);
         this.marshaller = DMNMarshallerFactory.newMarshallerWithExtensions(Collections.singletonList(new DMNDIExtensionsRegister()));
+        this.diagramService = diagramService;
     }
 
     @Deprecated
@@ -196,9 +206,89 @@ public class DMNMarshaller implements DiagramMarshaller<Graph, Metadata, Diagram
                                                                                                                                     dmn -> new SimpleEntry<>(dmn,
                                                                                                                                                              dmnToStunner(dmn,
                                                                                                                                                                           hasComponentWidthsConsumer))));
+//        final List<Import> imports = dmnXml.getImport();
+//        if (imports != null) {
+//            for (final Import xmlImport : imports) {
+//                String[] splits = xmlImport.getLocationURI().split("/");
+//                Path path = PathFactory.newPath(splits[splits.length-1], xmlImport.getLocationURI());
+//                Diagram imported = diagramService.getDiagramByPath(path);
+//
+//                if (imported != null) {
+//                    for (Object obj : imported.getGraph().nodes()) {
+//                        Object content = ((Node) obj).getContent();
+//                        if (content instanceof View) {
+//                            Object definition = ((View) content).getDefinition();
+//                            if (definition instanceof DRGElement) {
+//                                DRGElement drgElement = (DRGElement) definition;
+//                                Node node = (Node) obj;
+//
+//                                final Object nodeContent = node.getContent();
+//                                final Definition definitionContent = (Definition) nodeContent;
+//                                final Object objectDefinition = definitionContent.getDefinition();
+//                                final String id =((DMNElement)objectDefinition).getId().getValue();
+//                                ((DMNElement)objectDefinition).getId().setValue("importedNode:"+id);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
+        final List<Import> imports = dmnXml.getImport();
+        if (imports != null) {
+            final ComponentsWidthsExtension componentsWidthsExtension = new ComponentsWidthsExtension();
+            final Consumer<ComponentWidths> componentWidthsConsumer = (cw) -> {
+                componentsWidthsExtension.getComponentsWidths().add(cw);
+            };
+
+            // loop infinito????
+            for (final Import xmlImport : imports){
+                try {
+                    String[] splits = xmlImport.getLocationURI().split("/");
+                    Path path = PathFactory.newPath(splits[splits.length-1], xmlImport.getLocationURI());
+                    Diagram imported = diagramService.getDiagramByPath(path);
+                    if (imported != null) {
+
+                        for (Object obj : imported.getGraph().nodes()) {
+                            Object content = ((Node) obj).getContent();
+                            if (content instanceof View) {
+                                Object definition = ((View) content).getDefinition();
+                                if (definition instanceof DRGElement) {
+
+                                    DRGElement drgElement = (DRGElement) definition;
+
+                                    Node node = (Node) obj;
+
+                                    org.kie.dmn.model.api.DRGElement st = stunnerToDMN((Node) obj, componentWidthsConsumer);
+                                    st.setId("importedNode:" + st.getId());
+                                    drgElement.getId().setValue(st.getId());
+
+//                                final Object nodeContent = node.getContent();
+//                                final Definition definitionContent = (Definition) nodeContent;
+//                                final Object objectDefinition = definitionContent.getDefinition();
+//                                final String id =((DMNElement)objectDefinition).getId().getValue();
+//                                ((DMNElement)objectDefinition).getId().setValue("importedNode:"+id);
+
+                                    elems.put(drgElement.getId().getValue(),
+                                              new SimpleEntry<org.kie.dmn.model.api.DRGElement, Node>(st, (Node) obj));
+                                }
+                            }
+                        }
+                    }
+                }catch(Exception ex){
+
+                }
+            }
+        }
+
+        // Acho que se colocar no elems vai funcionar tudo
+        // aqui carrega os nodos importados
+        // eles vão pro elems
+        // o dmnDDDiagram tem os shapes
         Set<org.kie.dmn.model.api.DecisionService> dmnDecisionServices = new HashSet<>();
         Optional<org.kie.dmn.model.api.dmndi.DMNDiagram> dmnDDDiagram = findDMNDiagram(dmnXml);
+
+
 
         // Stunner rely on relative positioning for Edge connections, so need to cycle on DMNShape first.
         for (Entry<org.kie.dmn.model.api.DRGElement, Node> kv : elems.values()) {
@@ -371,8 +461,8 @@ public class DMNMarshaller implements DiagramMarshaller<Graph, Metadata, Diagram
                                                 BindableAdapterUtils.getDefinitionSetId(DMNDefinitionSet.class),
                                                 metadata).getGraph();
         elems.values().stream().map(Map.Entry::getValue).forEach(graph::addNode);
-        textAnnotations.values().forEach(graph::addNode);
 
+        textAnnotations.values().forEach(graph::addNode);
         Node<?, ?> dmnDiagramRoot = findDMNDiagramRoot(graph);
         Definitions definitionsStunnerPojo = DefinitionsConverter.wbFromDMN(dmnXml);
         ((View<DMNDiagram>) dmnDiagramRoot.getContent()).getDefinition().setDefinitions(definitionsStunnerPojo);
@@ -409,6 +499,8 @@ public class DMNMarshaller implements DiagramMarshaller<Graph, Metadata, Diagram
             });
         });
 
+
+
         return graph;
     }
 
@@ -440,8 +532,33 @@ public class DMNMarshaller implements DiagramMarshaller<Graph, Metadata, Diagram
         return href.contains("#") ? href.substring(href.indexOf('#') + 1) : href;
     }
 
+    private Node setAllowOnlyVisualChange(final Node node) {
+
+        final Object content = node.getContent();
+        if (content instanceof Definition) {
+            final Definition definition = (Definition) content;
+            final Object objectDefinition = definition.getDefinition();
+            if (objectDefinition instanceof DynamicReadOnly && objectDefinition instanceof DMNElement) {
+                final String id =((DMNElement)objectDefinition).getId().getValue();
+                if (id.contains(":")) {
+                    ((DynamicReadOnly)objectDefinition).setAllowOnlyVisualChange(true);
+                }
+            }
+        }
+
+        return node;
+    }
+
     private Node dmnToStunner(org.kie.dmn.model.api.DRGElement dmn,
                               final BiConsumer<String, HasComponentWidths> hasComponentWidthsConsumer) {
+
+        final Node node = createNode(dmn, hasComponentWidthsConsumer);
+        return setAllowOnlyVisualChange(node);
+    }
+
+    private Node createNode(org.kie.dmn.model.api.DRGElement dmn,
+                              final BiConsumer<String, HasComponentWidths> hasComponentWidthsConsumer){
+
         if (dmn instanceof org.kie.dmn.model.api.InputData) {
             return inputDataConverter.nodeFromDMN((org.kie.dmn.model.api.InputData) dmn,
                                                   hasComponentWidthsConsumer);
@@ -458,7 +575,7 @@ public class DMNMarshaller implements DiagramMarshaller<Graph, Metadata, Diagram
             return decisionServiceConverter.nodeFromDMN((org.kie.dmn.model.api.DecisionService) dmn,
                                                         hasComponentWidthsConsumer);
         } else {
-            throw new UnsupportedOperationException("TODO"); // TODO 
+            throw new UnsupportedOperationException("TODO"); // TODO
         }
     }
 
@@ -610,9 +727,16 @@ public class DMNMarshaller implements DiagramMarshaller<Graph, Metadata, Diagram
                 View<?> view = (View<?>) node.getContent();
                 if (view.getDefinition() instanceof DRGElement) {
                     DRGElement n = (org.kie.workbench.common.dmn.api.definition.v1_1.DRGElement) view.getDefinition();
-                    nodes.put(n.getId().getValue(),
-                              stunnerToDMN(node,
-                                           componentWidthsConsumer));
+
+                    if (view.getDefinition() instanceof DynamicReadOnly) {
+                        final DynamicReadOnly def = (DynamicReadOnly) view.getDefinition();
+                        if (!def.isAllowOnlyVisualChange()) {
+                            nodes.put(n.getId().getValue(),
+                                      stunnerToDMN(node,
+                                                   componentWidthsConsumer));
+                        }
+                    }
+
                     dmnDDDMNDiagram.getDMNDiagramElement().add(stunnerToDDExt((View<? extends DMNElement>) view));
                 } else if (view.getDefinition() instanceof TextAnnotation) {
                     TextAnnotation textAnnotation = (TextAnnotation) view.getDefinition();

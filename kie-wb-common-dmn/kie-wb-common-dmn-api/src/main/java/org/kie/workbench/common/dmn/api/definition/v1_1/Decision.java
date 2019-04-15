@@ -54,8 +54,8 @@ import static org.kie.workbench.common.forms.adf.engine.shared.formGeneration.pr
 @Bindable
 @Definition(graphFactory = NodeFactory.class, nameField = "name")
 @FormDefinition(policy = FieldPolicy.ONLY_MARKED,
-        defaultFieldSettings = {@FieldParam(name = FIELD_CONTAINER_PARAM, value = COLLAPSIBLE_CONTAINER)},
-        startElement = "id")
+    defaultFieldSettings = {@FieldParam(name = FIELD_CONTAINER_PARAM, value = COLLAPSIBLE_CONTAINER)},
+    startElement = "id")
 public class Decision extends DRGElement implements DomainObject,
                                                     HasExpression,
                                                     DMNViewDefinition<GeneralRectangleDimensionsSet>,
@@ -66,8 +66,8 @@ public class Decision extends DRGElement implements DomainObject,
 
     @Labels
     private static final Set<String> stunnerLabels = new Sets.Builder<String>()
-            .add("decision")
-            .build();
+                                                         .add("decision")
+                                                         .build();
 
     @Property
     @FormField(afterElement = "name")
