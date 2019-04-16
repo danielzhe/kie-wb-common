@@ -16,6 +16,9 @@
 
 package org.kie.workbench.common.forms.adf.definitions;
 
+/**
+ * Allows a property to be dynamically set as readonly or not.
+ */
 public interface DynamicReadOnly {
 
     ReadOnly getReadOnly(final String fieldName);
@@ -25,8 +28,20 @@ public interface DynamicReadOnly {
     boolean isAllowOnlyVisualChange();
 
     enum ReadOnly {
+
+        /**
+         * isAllowOnlyVisualChange() is false.
+         */
         NOT_SET,
+
+        /**
+         * isAllowOnlyVisualChange() is true and the property is readonly.
+         */
         TRUE,
+
+        /**
+         * isAllowOnlyVisualChange() is true and the property is NOT readonly.
+         */
         FALSE
     }
 }

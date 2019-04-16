@@ -62,19 +62,23 @@ public class ObserverBuilderControl extends org.kie.workbench.common.stunner.cor
     protected void updateElementFromDefinition(final Element element, final Object definition) {
 
         final Object newDefinition = ((View) element.getContent()).getDefinition();
-        if ((definition instanceof HasName) && (newDefinition instanceof HasName)) {
+        if (areBothObjectsTypeOf(definition, newDefinition, HasName.class)) {
             ((HasName) newDefinition).getName().setValue(((HasName) definition).getName().getValue());
         }
 
-        if ((newDefinition instanceof DynamicReadOnly) && (definition instanceof DynamicReadOnly)) {
+        if (areBothObjectsTypeOf(newDefinition, definition, DynamicReadOnly.class)) {
             ((DynamicReadOnly) newDefinition).setAllowOnlyVisualChange(((DynamicReadOnly) definition).isAllowOnlyVisualChange());
         }
 
-        if ((newDefinition instanceof DMNElement) && (definition instanceof DMNElement)) {
+        if (areBothObjectsTypeOf(newDefinition, definition, DMNElement.class)) {
             final DMNElement dmnElement = (DMNElement) definition;
             if (!StringUtils.isEmpty(dmnElement.getId().getValue())) {
                 ((DMNElement) newDefinition).getId().setValue(dmnElement.getId().getValue());
             }
         }
+    }
+
+    boolean areBothObjectsTypeOf(final Object o1, final Object o2, final Class type) {
+        return type.isInstance(o1) && type.isInstance(o2);
     }
 }

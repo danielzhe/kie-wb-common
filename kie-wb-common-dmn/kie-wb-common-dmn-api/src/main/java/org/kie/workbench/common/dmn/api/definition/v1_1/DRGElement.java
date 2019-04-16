@@ -24,7 +24,14 @@ import org.kie.workbench.common.forms.adf.definitions.DynamicReadOnly;
 
 public abstract class DRGElement extends NamedElement implements DynamicReadOnly {
 
-    private static final String[] READONLY_FIELDS = {"Name", "AllowedAnswers", "Description", "Question", "DataType", "SourceType", "LocationURI"};
+    private static final String[] READONLY_FIELDS = {
+        "Name",
+        "AllowedAnswers",
+        "Description",
+        "Question",
+        "DataType",
+        "SourceType",
+        "LocationURI"};
 
     protected boolean allowOnlyVisualChange;
 

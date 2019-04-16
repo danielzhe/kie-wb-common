@@ -66,8 +66,8 @@ public class Decision extends DRGElement implements DomainObject,
 
     @Labels
     private static final Set<String> stunnerLabels = new Sets.Builder<String>()
-                                                         .add("decision")
-                                                         .build();
+                                                             .add("decision")
+                                                             .build();
 
     @Property
     @FormField(afterElement = "name")

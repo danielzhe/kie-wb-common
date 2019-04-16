@@ -57,7 +57,10 @@ import static org.kie.workbench.common.forms.adf.engine.shared.formGeneration.pr
 public class TextAnnotation extends Artifact implements DMNViewDefinition<GeneralRectangleDimensionsSet>,
                                                         DynamicReadOnly {
 
-    private static final String[] READONLY_FIELDS = {"Description", "Text", "TextFormat"};
+    private static final String[] READONLY_FIELDS = {
+        "Description",
+        "Text",
+        "TextFormat"};
 
     @Category
     private static final String stunnerCategory = Categories.NODES;

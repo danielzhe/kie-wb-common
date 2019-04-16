@@ -37,7 +37,6 @@ import org.kie.workbench.common.forms.adf.definitions.DynamicReadOnly;
 import org.kie.workbench.common.stunner.core.client.api.SessionManager;
 import org.kie.workbench.common.stunner.core.client.canvas.AbstractCanvasHandler;
 import org.kie.workbench.common.stunner.core.client.canvas.controls.event.BuildCanvasShapeEvent;
-import org.kie.workbench.common.stunner.core.client.components.drag.DragProxy;
 import org.kie.workbench.common.stunner.core.client.components.drag.DragProxyCallback;
 import org.kie.workbench.common.stunner.core.client.components.glyph.ShapeGlyphDragHandler;
 import org.kie.workbench.common.stunner.core.client.service.ClientFactoryService;
@@ -131,57 +130,57 @@ public class DecisionComponentsItemView implements DecisionComponentsItem.View {
         final ShapeFactory factory = dmnShapeSet.getShapeFactory();
         final Glyph glyph = factory.getGlyph(className);
 
-        DragProxy itemDragProxy = shapeGlyphDragHandler.show(new ShapeGlyphDragHandler.Item() {
-                                                                 @Override
-                                                                 public Glyph getShape() {
-                                                                     return glyph;
-                                                                 }
+        shapeGlyphDragHandler.show(new ShapeGlyphDragHandler.Item() {
+                                       @Override
+                                       public Glyph getShape() {
+                                           return glyph;
+                                       }
 
-                                                                 @Override
+                                       @Override
 
-                                                                 public int getWidth() {
-                                                                     return 16;
-                                                                 }
+                                       public int getWidth() {
+                                           return 16;
+                                       }
 
-                                                                 @Override
-                                                                 public int getHeight() {
-                                                                     return 16;
-                                                                 }
-                                                             },
-                                                             x,
-                                                             y,
-                                                             new DragProxyCallback() {
-                                                                 @Override
-                                                                 public void onStart(int x,
-                                                                                     int y) {
-                                                                 }
+                                       @Override
+                                       public int getHeight() {
+                                           return 16;
+                                       }
+                                   },
+                                   x,
+                                   y,
+                                   new DragProxyCallback() {
+                                       @Override
+                                       public void onStart(int x,
+                                                           int y) {
+                                       }
 
-                                                                 @Override
-                                                                 public void onMove(int x,
-                                                                                    int y) {
+                                       @Override
+                                       public void onMove(int x,
+                                                          int y) {
 
-                                                                 }
+                                       }
 
-                                                                 @Override
-                                                                 public void onComplete(int x,
-                                                                                        int y) {
+                                       @Override
+                                       public void onComplete(int x,
+                                                              int y) {
 
-                                                                     final Object definition = clientFactoryServices.getClientFactoryManager().newDefinition(className);
-                                                                     ((HasName) definition).setName(new Name(name.textContent));
-                                                                     if (!objectId.contains(":")) {
-                                                                         objectId = "importedNode:" + objectId;
-                                                                     }
-                                                                     ((DMNElement) definition).getId().setValue(objectId);
-                                                                     if (definition instanceof DynamicReadOnly) {
-                                                                         ((DynamicReadOnly) definition).setAllowOnlyVisualChange(true);
-                                                                     }
+                                           final Object definition = clientFactoryServices.getClientFactoryManager().newDefinition(className);
+                                           ((HasName) definition).setName(new Name(name.textContent));
+                                           if (!objectId.contains(":")) {
+                                               objectId = "importedNode:" + objectId;
+                                           }
+                                           ((DMNElement) definition).getId().setValue(objectId);
+                                           if (definition instanceof DynamicReadOnly) {
+                                               ((DynamicReadOnly) definition).setAllowOnlyVisualChange(true);
+                                           }
 
-                                                                     buildCanvasShapeEvent.fire(new BuildCanvasShapeEvent((AbstractCanvasHandler) sessionManager.getCurrentSession().getCanvasHandler(),
-                                                                                                                          definition,
-                                                                                                                          factory,
-                                                                                                                          x,
-                                                                                                                          y));
-                                                                 }
-                                                             });
+                                           buildCanvasShapeEvent.fire(new BuildCanvasShapeEvent((AbstractCanvasHandler) sessionManager.getCurrentSession().getCanvasHandler(),
+                                                                                                definition,
+                                                                                                factory,
+                                                                                                x,
+                                                                                                y));
+                                       }
+                                   });
     }
 }

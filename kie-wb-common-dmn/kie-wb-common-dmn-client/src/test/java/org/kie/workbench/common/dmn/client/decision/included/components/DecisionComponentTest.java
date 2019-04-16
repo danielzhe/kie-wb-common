@@ -66,6 +66,16 @@ public class DecisionComponentTest {
     }
 
     @Test
+    public void testGetClassName() {
+        assertEquals(drgElementClass.getName(), component.getClassName());
+    }
+
+    @Test
+    public void testGetId() {
+        assertEquals(drgElementId, component.getId());
+    }
+
+    @Test
     public void testGetIcon() {
 
         final ImageDataUriGlyph expectedIcon = DMNSVGGlyphFactory.DECISION_PALETTE;
