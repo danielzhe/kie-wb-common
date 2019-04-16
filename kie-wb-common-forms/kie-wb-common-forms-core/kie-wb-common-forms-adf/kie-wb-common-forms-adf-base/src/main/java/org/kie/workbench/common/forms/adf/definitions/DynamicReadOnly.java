@@ -18,5 +18,15 @@ package org.kie.workbench.common.forms.adf.definitions;
 
 public interface DynamicReadOnly {
 
-    boolean isReadOnly();
+    ReadOnly getReadOnly(final String fieldName);
+
+    void setAllowOnlyVisualChange(final boolean allowOnlyVisualChange);
+
+    boolean isAllowOnlyVisualChange();
+
+    enum ReadOnly {
+        NOT_SET,
+        TRUE,
+        FALSE
+    }
 }

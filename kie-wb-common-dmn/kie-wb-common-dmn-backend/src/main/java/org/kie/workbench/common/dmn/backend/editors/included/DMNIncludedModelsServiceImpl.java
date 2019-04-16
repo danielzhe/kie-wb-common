@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -29,9 +30,12 @@ import javax.inject.Inject;
 
 import org.guvnor.common.services.project.model.WorkspaceProject;
 import org.jboss.errai.bus.server.annotations.Service;
+import org.kie.dmn.model.api.Import;
+import org.kie.workbench.common.dmn.api.definition.v1_1.DRGElement;
 import org.kie.workbench.common.dmn.api.editors.included.DMNIncludedModel;
 import org.kie.workbench.common.dmn.api.editors.included.DMNIncludedModelsService;
 import org.kie.workbench.common.dmn.api.editors.included.DMNIncludedNode;
+import org.kie.workbench.common.dmn.backend.editors.common.DMNDiagramHelper;
 import org.kie.workbench.common.dmn.backend.editors.common.DMNIncludeModelFactory;
 import org.kie.workbench.common.dmn.backend.editors.common.DMNIncludedNodesFilter;
 import org.kie.workbench.common.dmn.backend.editors.types.exceptions.DMNIncludeModelCouldNotBeCreatedException;
@@ -40,6 +44,9 @@ import org.kie.workbench.common.dmn.backend.editors.types.query.DMNValueReposito
 import org.kie.workbench.common.services.refactoring.backend.server.query.RefactoringQueryServiceImpl;
 import org.kie.workbench.common.services.refactoring.model.index.terms.valueterms.ValueIndexTerm;
 import org.kie.workbench.common.services.refactoring.model.query.RefactoringPageRequest;
+import org.kie.workbench.common.stunner.core.diagram.Diagram;
+import org.kie.workbench.common.stunner.core.diagram.Metadata;
+import org.kie.workbench.common.stunner.core.graph.Graph;
 import org.kie.workbench.common.stunner.core.lookup.diagram.DiagramLookupRequest;
 import org.kie.workbench.common.stunner.core.lookup.diagram.DiagramRepresentation;
 import org.kie.workbench.common.stunner.core.service.DiagramLookupService;
@@ -60,6 +67,10 @@ public class DMNIncludedModelsServiceImpl implements DMNIncludedModelsService {
     private final DMNIncludeModelFactory includeModelFactory;
 
     private final DMNIncludedNodesFilter includedNodesFilter;
+
+    // Add this to constructor injection
+    @Inject
+    private DMNDiagramHelper diagramHelper;
 
     @Inject
     public DMNIncludedModelsServiceImpl(final RefactoringQueryServiceImpl refactoringQueryService,
@@ -142,5 +153,31 @@ public class DMNIncludedModelsServiceImpl implements DMNIncludedModelsService {
         queryTerms.add(new DMNValueFileExtensionIndexTerm());
 
         return queryTerms;
+    }
+
+    public List<DRGElement> getIncludedNodes(final List<Diagram<Graph, Metadata>> diagrams) {
+        return diagrams
+                   .stream()
+                   .flatMap(diagram -> diagramHelper.getNodes(diagram).stream())
+                   .collect(Collectors.toList());
+    }
+
+    public List<Diagram<Graph, Metadata>> getImportedDiagrams(final WorkspaceProject workspaceProject,
+                                                              final List<Import> includedModels) {
+        final List<Path> paths = getPaths(workspaceProject);
+        return paths.stream()
+                    .map(path -> diagramHelper.getDiagramByPath(path))
+                    .filter(isImported(includedModels))
+                    .collect(Collectors.toList());
+    }
+
+    private Predicate<Diagram<Graph, Metadata>> isImported(final List<Import> includedModels) {
+        return diagram -> includedModels
+                              .stream()
+                              .anyMatch(includedModel -> {
+                                  final String diagramNamespace = diagramHelper.getNamespace(diagram);
+                                  final String includedModelNamespace = includedModel.getNamespace();
+                                  return Objects.equals(diagramNamespace, includedModelNamespace);
+                              });
     }
 }

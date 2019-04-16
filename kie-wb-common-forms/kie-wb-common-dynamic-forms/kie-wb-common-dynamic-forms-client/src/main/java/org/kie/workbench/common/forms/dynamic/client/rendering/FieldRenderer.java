@@ -77,7 +77,10 @@ public abstract class FieldRenderer<F extends FieldDefinition, FORM_GROUP extend
                     }
                     final Object model = renderingContext.getModel();
                     if (model instanceof DynamicReadOnly){
-                        readOnly = ((DynamicReadOnly) model).isReadOnly();
+                        final DynamicReadOnly.ReadOnly readonlyMode = ((DynamicReadOnly) model).getReadOnly(field.getName());
+                        if (readonlyMode == DynamicReadOnly.ReadOnly.TRUE) {
+                            readOnly = true;
+                        }
                     }
                     FieldRenderer.this.setReadOnly(readOnly);
                 }
