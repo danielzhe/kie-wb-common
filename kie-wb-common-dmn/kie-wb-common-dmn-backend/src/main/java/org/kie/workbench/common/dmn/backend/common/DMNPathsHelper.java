@@ -45,9 +45,9 @@ import static org.kie.workbench.common.dmn.backend.editors.types.query.FindAllDm
 @ApplicationScoped
 public class DMNPathsHelper {
 
-    private static final String STANDALONE_URI = "default://master@system/stunner/diagrams";
+    static final String STANDALONE_URI = "default://master@system/stunner/diagrams";
 
-    private static final String STANDALONE_FILE_NAME = "diagrams";
+    static final String STANDALONE_FILE_NAME = "diagrams";
 
     private final RefactoringQueryServiceImpl refactoringQueryService;
 
@@ -83,15 +83,6 @@ public class DMNPathsHelper {
                 .collect(Collectors.toList());
     }
 
-    private DirectoryStream<org.uberfire.java.nio.file.Path> getDMNPaths() {
-        final org.uberfire.java.nio.file.Path root = getStandaloneRootPath();
-        return ioService.newDirectoryStream(root, path -> resourceType.accept(Paths.convert(path)));
-    }
-
-    private org.uberfire.java.nio.file.Path getStandaloneRootPath() {
-        return Paths.convert(PathFactory.newPath(STANDALONE_FILE_NAME, STANDALONE_URI));
-    }
-
     private List<Path> getPathsByWorkspaceProject(final WorkspaceProject workspaceProject) {
         final RefactoringPageRequest request = buildRequest(workspaceProject.getRootPath().toURI());
         return refactoringQueryService
@@ -114,5 +105,18 @@ public class DMNPathsHelper {
         queryTerms.add(new DMNValueFileExtensionIndexTerm());
 
         return queryTerms;
+    }
+
+    DirectoryStream<org.uberfire.java.nio.file.Path> getDMNPaths() {
+        final org.uberfire.java.nio.file.Path root = getStandaloneRootPath();
+        return ioService.newDirectoryStream(root, dmnAssetsFilter());
+    }
+
+    DirectoryStream.Filter<org.uberfire.java.nio.file.Path> dmnAssetsFilter() {
+        return path -> resourceType.accept(Paths.convert(path));
+    }
+
+    org.uberfire.java.nio.file.Path getStandaloneRootPath() {
+        return Paths.convert(PathFactory.newPath(STANDALONE_FILE_NAME, STANDALONE_URI));
     }
 }

@@ -39,7 +39,12 @@ public interface DMNIncludedModelsService {
      * @param workspaceProject represents the project that will be scanned.
      * @param includedModels represents all imports that provide the list of nodes.
      * @return returns the list of 'DMNIncludedNode's.
+     * ---
+     * @deprecated Imported nodes are being loaded by the marshaller now. Thus, client side components can consume nodes
+     * directly from the 'Diagram'.
+     * - This method will be removed by https://issues.jboss.org/browse/DROOLS-3831.
      */
+    @Deprecated
     List<DMNIncludedNode> loadNodesFromImports(final WorkspaceProject workspaceProject,
                                                final List<DMNIncludedModel> includedModels);
 }
