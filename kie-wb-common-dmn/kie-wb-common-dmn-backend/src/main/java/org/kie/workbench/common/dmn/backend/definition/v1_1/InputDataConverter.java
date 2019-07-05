@@ -65,6 +65,8 @@ public class InputDataConverter implements NodeConverter<org.kie.dmn.model.api.I
             informationItem.setParent(inputData);
         }
 
+        DMNExternalLinksToExtensionElements.loadExternalLinksFromExtensionElements(dmn, inputData);
+
         return node;
     }
 
@@ -81,6 +83,7 @@ public class InputDataConverter implements NodeConverter<org.kie.dmn.model.api.I
             variable.setParent(result);
         }
         result.setVariable(variable);
+        DMNExternalLinksToExtensionElements.loadExternalLinksIntoExtensionElements(source, result);
         return result;
     }
 }
