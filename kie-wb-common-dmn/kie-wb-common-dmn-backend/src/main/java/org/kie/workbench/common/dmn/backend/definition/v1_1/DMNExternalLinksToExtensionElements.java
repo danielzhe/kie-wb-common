@@ -21,20 +21,26 @@ import java.util.Objects;
 import org.kie.dmn.model.api.DMNElement;
 import org.kie.dmn.model.api.DRGElement;
 import org.kie.dmn.model.v1_1.TDMNElement;
-import org.kie.dmn.model.v1_2.TDMNExternalLink;
 import org.kie.workbench.common.dmn.api.property.dmn.DMNExternalLink;
 import org.kie.workbench.common.dmn.api.property.dmn.DocumentationLinks;
+import org.kie.workbench.common.dmn.backend.definition.v1_1.dd.ExternalLink;
+import org.kie.workbench.common.dmn.backend.definition.v1_1.dd.ExternalLinkExtensions;
 
 class DMNExternalLinksToExtensionElements {
 
     static void loadExternalLinksFromExtensionElements(final org.kie.dmn.model.api.DRGElement source,
                                                        final org.kie.workbench.common.dmn.api.definition.v1_1.DRGElement target) {
+
         if (!Objects.isNull(source.getExtensionElements())) {
-            for (final org.kie.dmn.model.api.DMNExternalLink el : source.getExtensionElements().getExternalLinks()) {
-                final DMNExternalLink external = new DMNExternalLink();
-                external.setDescription(el.getLinkDescription());
-                external.setUrl(el.getURL());
-                target.getLinksHolder().getValue().addLink(external);
+            for (final Object obj : source.getExtensionElements().getAny()) {
+
+                if (obj instanceof ExternalLink) {
+                    ExternalLink el = (ExternalLink) obj;
+                    final DMNExternalLink external = new DMNExternalLink();
+                    external.setDescription(el.getName());
+                    external.setUrl(el.getUrl());
+                    target.getLinksHolder().getValue().addLink(external);
+                }
             }
         }
     }
@@ -50,14 +56,17 @@ class DMNExternalLinksToExtensionElements {
 
         final DMNElement.ExtensionElements elements = getOrCreateExtensionElements(target);
 
-        elements.getExternalLinks().clear();
+        //elements.getAny()
+
+        ExternalLinkExtensions extensions = new ExternalLinkExtensions();
 
         for (final DMNExternalLink link : links.getLinks()) {
-            final TDMNExternalLink external = new TDMNExternalLink();
-            external.setLinkDescription(link.getDescription());
-            external.setURL(link.getUrl());
-            elements.getExternalLinks().add(external);
+            final ExternalLink external = new ExternalLink();
+            external.setName(link.getDescription());
+            external.setUrl(link.getUrl());
+            extensions.getExternalLinks().add(external);
         }
+        elements.getAny().add(extensions);
 
         target.setExtensionElements(elements);
     }

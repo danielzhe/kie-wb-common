@@ -33,13 +33,26 @@ public class DMNDIExtensionsRegister implements DMNExtensionRegister {
 
     static final String COMPONENT_WIDTH_ALIAS = "width";
 
+    static final String EXTERNAL_LINK_EXTENSION_ALIAS = "ExternalLinkExtension";
+
+    static final String EXTERNAL_LINKS_ALIAS = "attachments";
+
+    static final String EXTERNAL_LINK_ALIAS = "attachment";
+
     @Override
     public void registerExtensionConverters(final XStream xStream) {
         xStream.processAnnotations(ComponentsWidthsExtension.class);
         xStream.processAnnotations(ComponentWidths.class);
         xStream.alias(COMPONENT_WIDTH_ALIAS, Double.class);
 
+        xStream.alias(EXTERNAL_LINK_ALIAS, ExternalLink.class);
+        xStream.alias(EXTERNAL_LINKS_ALIAS, ExternalLinkExtensions.class);
+
+        xStream.processAnnotations(ExternalLinkExtensions.class);
+        xStream.processAnnotations(ExternalLink.class);
+
         xStream.registerConverter(new ComponentWidthsConverter(xStream));
+        xStream.registerConverter(new ExternalLinksConverter(xStream));
     }
 
     @Override
@@ -61,6 +74,19 @@ public class DMNDIExtensionsRegister implements DMNExtensionRegister {
                                            COMPONENT_WIDTH_ALIAS,
                                            prefix),
                                  COMPONENT_WIDTH_ALIAS);
+
+            qmap.registerMapping(new QName(KIE.getUri(),
+                                           EXTERNAL_LINK_EXTENSION_ALIAS,
+                                           prefix),
+                                 EXTERNAL_LINK_EXTENSION_ALIAS);
+            qmap.registerMapping(new QName(KIE.getUri(),
+                                           EXTERNAL_LINKS_ALIAS,
+                                           prefix),
+                                 EXTERNAL_LINKS_ALIAS);
+            qmap.registerMapping(new QName(KIE.getUri(),
+                                           EXTERNAL_LINK_ALIAS,
+                                           prefix),
+                                 EXTERNAL_LINK_ALIAS);
         }
     }
 }
