@@ -21,12 +21,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import jsinterop.base.Js;
-import org.kie.workbench.common.dmn.api.definition.HasComponentWidths;
 import org.kie.workbench.common.dmn.api.definition.model.DMNElementReference;
 import org.kie.workbench.common.dmn.api.definition.model.DRGElement;
 import org.kie.workbench.common.dmn.api.definition.model.Decision;
@@ -41,6 +39,7 @@ import org.kie.workbench.common.dmn.api.property.dmn.Description;
 import org.kie.workbench.common.dmn.api.property.dmn.Id;
 import org.kie.workbench.common.dmn.api.property.dmn.Name;
 import org.kie.workbench.common.dmn.api.property.font.FontSet;
+import org.kie.workbench.common.dmn.webapp.kogito.common.client.converters.stunner.NodeEntry;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITDMNElementReference;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITDecisionService;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITInformationItem;
@@ -75,10 +74,12 @@ public class DecisionServiceConverter implements NodeConverter<JSITDecisionServi
     }
 
     @Override
-    public Node<View<DecisionService>, ?> nodeFromDMN(final JSITDecisionService dmn,
-                                                      final BiConsumer<String, HasComponentWidths> hasComponentWidthsConsumer) {
+    public Node<View<DecisionService>, ?> nodeFromDMN(final NodeEntry nodeEntry) {
+
+        final JSITDecisionService dmn = Js.uncheckedCast(nodeEntry.getDmnElement());
+
         @SuppressWarnings("unchecked")
-        final Node<View<DecisionService>, ?> node = (Node<View<DecisionService>, ?>) factoryManager.newElement(dmn.getId(),
+        final Node<View<DecisionService>, ?> node = (Node<View<DecisionService>, ?>) factoryManager.newElement(nodeEntry.getId(),
                                                                                                                getDefinitionId(DecisionService.class)).asNode();
         final Id id = IdPropertyConverter.wbFromDMN(dmn.getId());
         final Description description = DescriptionPropertyConverter.wbFromDMN(dmn.getDescription());
@@ -134,6 +135,7 @@ public class DecisionServiceConverter implements NodeConverter<JSITDecisionServi
                                                                     new FontSet(),
                                                                     new DecisionServiceRectangleDimensionsSet(),
                                                                     new DecisionServiceDividerLineY());
+        decisionService.setDmnDiagramId(nodeEntry.getDiagramId());
         node.getContent().setDefinition(decisionService);
 
         if (Objects.nonNull(informationItem)) {

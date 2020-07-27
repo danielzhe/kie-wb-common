@@ -19,10 +19,9 @@ package org.kie.workbench.common.dmn.webapp.kogito.common.client.converters.mode
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.kie.workbench.common.dmn.api.definition.HasComponentWidths;
+import jsinterop.base.Js;
 import org.kie.workbench.common.dmn.api.definition.model.DRGElement;
 import org.kie.workbench.common.dmn.api.definition.model.Decision;
 import org.kie.workbench.common.dmn.api.definition.model.InputData;
@@ -35,6 +34,7 @@ import org.kie.workbench.common.dmn.api.property.dmn.KnowledgeSourceType;
 import org.kie.workbench.common.dmn.api.property.dmn.LocationURI;
 import org.kie.workbench.common.dmn.api.property.dmn.Name;
 import org.kie.workbench.common.dmn.api.property.font.FontSet;
+import org.kie.workbench.common.dmn.webapp.kogito.common.client.converters.stunner.NodeEntry;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITAuthorityRequirement;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITDMNElementReference;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITKnowledgeSource;
@@ -58,10 +58,12 @@ public class KnowledgeSourceConverter implements NodeConverter<JSITKnowledgeSour
     }
 
     @Override
-    public Node<View<KnowledgeSource>, ?> nodeFromDMN(final JSITKnowledgeSource dmn,
-                                                      final BiConsumer<String, HasComponentWidths> hasComponentWidthsConsumer) {
+    public Node<View<KnowledgeSource>, ?> nodeFromDMN(final NodeEntry nodeEntry) {
+
+        final JSITKnowledgeSource dmn = Js.uncheckedCast(nodeEntry.getDmnElement());
+
         @SuppressWarnings("unchecked")
-        final Node<View<KnowledgeSource>, ?> node = (Node<View<KnowledgeSource>, ?>) factoryManager.newElement(dmn.getId(),
+        final Node<View<KnowledgeSource>, ?> node = (Node<View<KnowledgeSource>, ?>) factoryManager.newElement(nodeEntry.getId(),
                                                                                                                getDefinitionId(KnowledgeSource.class)).asNode();
         final Id id = IdPropertyConverter.wbFromDMN(dmn.getId());
         final Description description = DescriptionPropertyConverter.wbFromDMN(dmn.getDescription());
@@ -76,6 +78,7 @@ public class KnowledgeSourceConverter implements NodeConverter<JSITKnowledgeSour
                                                        new BackgroundSet(),
                                                        new FontSet(),
                                                        new GeneralRectangleDimensionsSet());
+        ks.setDmnDiagramId(nodeEntry.getDiagramId());
         node.getContent().setDefinition(ks);
 
         DMNExternalLinksToExtensionElements.loadExternalLinksFromExtensionElements(dmn, ks);

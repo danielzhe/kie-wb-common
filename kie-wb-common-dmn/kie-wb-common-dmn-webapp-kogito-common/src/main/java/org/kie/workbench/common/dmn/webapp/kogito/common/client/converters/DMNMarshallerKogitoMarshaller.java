@@ -28,6 +28,7 @@ import javax.inject.Inject;
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 
+import elemental2.dom.DomGlobal;
 import jsinterop.base.Js;
 import org.kie.workbench.common.dmn.api.definition.DMNViewDefinition;
 import org.kie.workbench.common.dmn.api.definition.model.Association;
@@ -64,7 +65,6 @@ import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSIT
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITInputData;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITKnowledgeSource;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITTextAnnotation;
-import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmndi12.JSIDMNDI;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmndi12.JSIDMNDiagram;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmndi12.JSIDMNEdge;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.kie.JSITComponentWidths;
@@ -80,6 +80,7 @@ import org.kie.workbench.common.stunner.core.graph.content.view.View;
 import org.kie.workbench.common.stunner.core.graph.content.view.ViewConnector;
 import org.kie.workbench.common.stunner.core.util.DefinitionUtils;
 
+import static org.kie.workbench.common.dmn.webapp.kogito.common.client.common.JsInteropHelpers.forEach;
 import static org.kie.workbench.common.dmn.webapp.kogito.common.client.converters.model.dd.PointUtils.upperLeftBound;
 import static org.kie.workbench.common.dmn.webapp.kogito.common.client.converters.model.dd.PointUtils.xOfBound;
 import static org.kie.workbench.common.dmn.webapp.kogito.common.client.converters.model.dd.PointUtils.yOfBound;
@@ -153,151 +154,158 @@ public class DMNMarshallerKogitoMarshaller {
             definitions.setExtensionElements(jsiExtensionElements);
         }
 
-        if (Objects.isNull(definitions.getDMNDI())) {
-            definitions.setDMNDI(new JSIDMNDI());
+        final Map<String, JSIDMNDiagram> dmnDiagramById = new HashMap<>();
+        final List<JSIDMNDiagram> dmnDiagrams = definitions.getDMNDI().getDMNDiagram();
+        for (int i = 0; i < dmnDiagrams.size(); i++) {
+            final JSIDMNDiagram dmnDDDMNDiagram = Js.uncheckedCast(dmnDiagrams.get(i));
+            final String id = dmnDDDMNDiagram.getId();
+            dmnDiagramById.put(id, dmnDDDMNDiagram);
+
+            //Setup callback for marshalling ComponentWidths
+            if (Objects.isNull(dmnDDDMNDiagram.getExtension())) {
+                dmnDDDMNDiagram.setExtension(new JSIDiagramElement.JSIExtension());
+            }
+            final JSITComponentsWidthsExtension componentsWidthsExtension = new JSITComponentsWidthsExtension();
+            final JSIDiagramElement.JSIExtension extension = dmnDDDMNDiagram.getExtension();
+            JSITComponentsWidthsExtension wrappedComponentsWidthsExtension = WrapperUtils.getWrappedJSITComponentsWidthsExtension(componentsWidthsExtension);
+            extension.addAny(wrappedComponentsWidthsExtension);
+
+            final Consumer<JSITComponentWidths> componentWidthsConsumer = (cw) -> componentsWidthsExtension.addComponentWidths(cw);
+
+            //Iterate Graph processing nodes..
+            for (Node<?, ?> node : graph.nodes()) {
+                if (node.getContent() instanceof View<?>) {
+                    final View<?> view = (View<?>) node.getContent();
+                    if (view.getDefinition() instanceof DRGElement) {
+
+                        final DRGElement drgElement = (DRGElement) view.getDefinition();
+                        final String dmnDiagramId = drgElement.getDmnDiagramId();
+                        final JSIDMNDiagram diagram = Js.uncheckedCast(dmnDiagramById.get(dmnDiagramId));
+
+                        DomGlobal.console.log("~~", dmnDiagramId);
+
+                        if (!drgElement.isAllowOnlyVisualChange()) {
+                            nodes.put(drgElement.getId().getValue(),
+                                      stunnerToDMN(node,
+                                                   componentWidthsConsumer));
+                        }
+
+                        final String namespaceURI = definitionsStunnerPojo.getDefaultNamespace();
+                        diagram.addDMNDiagramElement(WrapperUtils.getWrappedJSIDMNShape(definitionsStunnerPojo,
+                                                                                        (View<? extends DMNElement>) view,
+                                                                                        namespaceURI));
+                    } else if (view.getDefinition() instanceof TextAnnotation) {
+                        final TextAnnotation textAnnotation = (TextAnnotation) view.getDefinition();
+                        textAnnotations.put(textAnnotation.getId().getValue(),
+                                            textAnnotationConverter.dmnFromNode((Node<View<TextAnnotation>, ?>) node,
+                                                                                componentWidthsConsumer));
+                        final String namespaceURI = definitionsStunnerPojo.getDefaultNamespace();
+                        dmnDDDMNDiagram.addDMNDiagramElement(WrapperUtils.getWrappedJSIDMNShape(definitionsStunnerPojo,
+                                                                                                (View<? extends DMNElement>) view,
+                                                                                                namespaceURI));
+
+                        final List<JSITAssociation> associations = AssociationConverter.dmnFromWB((Node<View<TextAnnotation>, ?>) node);
+                        for (int j = 0; j < associations.size(); j++) {
+                            final JSITAssociation wrappedJSITAssociation = WrapperUtils.getWrappedJSITAssociation(Js.uncheckedCast(associations.get(j)));
+                            definitions.addArtifact(wrappedJSITAssociation);
+                        }
+                    }
+
+                    // DMNDI Edge management.
+                    final List<Edge<?, ?>> inEdges = (List<Edge<?, ?>>) node.getInEdges();
+                    for (Edge<?, ?> e : inEdges) {
+                        if (e.getContent() instanceof ViewConnector) {
+                            final ViewConnector connectionContent = (ViewConnector) e.getContent();
+                            if (connectionContent.getSourceConnection().isPresent() && connectionContent.getTargetConnection().isPresent()) {
+                                Point2D sourcePoint = ((Connection) connectionContent.getSourceConnection().get()).getLocation();
+                                Point2D targetPoint = ((Connection) connectionContent.getTargetConnection().get()).getLocation();
+                                final Node<?, ?> sourceNode = e.getSourceNode();
+                                final View<?> sourceView = (View<?>) sourceNode.getContent();
+                                double xSource = xOfBound(upperLeftBound(sourceView));
+                                double ySource = yOfBound(upperLeftBound(sourceView));
+                                double xTarget = xOfBound(upperLeftBound(view));
+                                double yTarget = yOfBound(upperLeftBound(view));
+                                if (Objects.isNull(sourcePoint)) {
+                                    // If the "connection source/target location is null" assume it's the centre of the shape.
+                                    if (sourceView.getDefinition() instanceof DMNViewDefinition) {
+                                        DMNViewDefinition dmnViewDefinition = (DMNViewDefinition) sourceView.getDefinition();
+                                        xSource += dmnViewDefinition.getDimensionsSet().getWidth().getValue() / 2;
+                                        ySource += dmnViewDefinition.getDimensionsSet().getHeight().getValue() / 2;
+                                    }
+                                    sourcePoint = Point2D.create(xSource, ySource);
+                                } else {
+                                    // If it is non-null it is relative to the source/target shape location.
+                                    sourcePoint = Point2D.create(xSource + sourcePoint.getX(), ySource + sourcePoint.getY());
+                                }
+                                if (Objects.isNull(targetPoint)) {
+                                    // If the "connection source/target location is null" assume it's the centre of the shape.
+                                    if (view.getDefinition() instanceof DMNViewDefinition) {
+                                        DMNViewDefinition dmnViewDefinition = (DMNViewDefinition) view.getDefinition();
+                                        xTarget += dmnViewDefinition.getDimensionsSet().getWidth().getValue() / 2;
+                                        yTarget += dmnViewDefinition.getDimensionsSet().getHeight().getValue() / 2;
+                                    }
+                                    targetPoint = Point2D.create(xTarget, yTarget);
+                                } else {
+                                    // If it is non-null it is relative to the source/target shape location.
+                                    targetPoint = Point2D.create(xTarget + targetPoint.getX(), yTarget + targetPoint.getY());
+                                }
+
+                                final JSIDMNEdge dmnEdge = new JSIDMNEdge();
+                                // DMNDI edge elementRef is uuid of Stunner edge,
+                                // with the only exception when edge contains as content a DMN Association (Association is an edge)
+                                String uuid = e.getUUID();
+                                if (e.getContent() instanceof View<?>) {
+                                    final View<?> edgeView = (View<?>) e.getContent();
+                                    if (edgeView.getDefinition() instanceof Association) {
+                                        uuid = ((Association) edgeView.getDefinition()).getId().getValue();
+                                    }
+                                }
+                                dmnEdge.setId("dmnedge-" + uuid);
+                                final String namespaceURI = definitionsStunnerPojo.getDefaultNamespace();
+                                dmnEdge.setDmnElementRef(new QName(namespaceURI,
+                                                                   uuid,
+                                                                   XMLConstants.DEFAULT_NS_PREFIX));
+                                dmnEdge.addWaypoint(PointUtils.point2dToDMNDIPoint(sourcePoint));
+                                for (ControlPoint cp : connectionContent.getControlPoints()) {
+                                    dmnEdge.addWaypoint(PointUtils.point2dToDMNDIPoint(cp.getLocation()));
+                                }
+                                dmnEdge.addWaypoint(PointUtils.point2dToDMNDIPoint(targetPoint));
+                                dmnEdges.add(dmnEdge);
+                            }
+                        }
+                    }
+                }
+            }
+            nodes.values().forEach(n -> {
+                JSINodeLocalPartName localPart = JSINodeLocalPartName.UNKNOWN;
+                if (JSITBusinessKnowledgeModel.instanceOf(n)) {
+                    localPart = JSINodeLocalPartName.BUSINESS_KNOWLEDGE_MODEL;
+                } else if (JSITDecision.instanceOf(n)) {
+                    localPart = JSINodeLocalPartName.DECISION;
+                } else if (JSITDecisionService.instanceOf(n)) {
+                    localPart = JSINodeLocalPartName.DECISION_SERVICE;
+                } else if (JSITInputData.instanceOf(n)) {
+                    localPart = JSINodeLocalPartName.INPUT_DATA;
+                } else if (JSITKnowledgeSource.instanceOf(n)) {
+                    localPart = JSINodeLocalPartName.KNOWLEDGE_SOURCE;
+                }
+                final JSITDRGElement toAdd = WrapperUtils.getWrappedJSITDRGElement(n, PREFIX, localPart.getLocalPart());
+                definitions.addDrgElement(toAdd);
+            });
+            textAnnotations.values().forEach(text -> {
+                final JSITTextAnnotation wrappedText = WrapperUtils.getWrappedJSITTextAnnotation(text);
+                definitions.addArtifact(wrappedText);
+            });
+            for (int j = 0; j < dmnEdges.size(); j++) {
+                dmnDDDMNDiagram.addDMNDiagramElement(WrapperUtils.getWrappedJSIDMNEdge(Js.uncheckedCast(dmnEdges.get(j))));
+            }
         }
-        final JSIDMNDiagram dmnDDDMNDiagram = new JSIDMNDiagram();
-        // TODO {gcardosi} add because  present in original json
-        dmnDDDMNDiagram.setDMNDiagramElement(new ArrayList<>());
-        definitions.getDMNDI().addDMNDiagram(dmnDDDMNDiagram);
 
         //Convert relative positioning to absolute
         for (Node<?, ?> node : graph.nodes()) {
             PointUtils.convertToAbsoluteBounds(node);
         }
 
-        //Setup callback for marshalling ComponentWidths
-        if (Objects.isNull(dmnDDDMNDiagram.getExtension())) {
-            dmnDDDMNDiagram.setExtension(new JSIDiagramElement.JSIExtension());
-        }
-        final JSITComponentsWidthsExtension componentsWidthsExtension = new JSITComponentsWidthsExtension();
-        final JSIDiagramElement.JSIExtension extension = dmnDDDMNDiagram.getExtension();
-        JSITComponentsWidthsExtension wrappedComponentsWidthsExtension = WrapperUtils.getWrappedJSITComponentsWidthsExtension(componentsWidthsExtension);
-        extension.addAny(wrappedComponentsWidthsExtension);
-
-        final Consumer<JSITComponentWidths> componentWidthsConsumer = (cw) -> componentsWidthsExtension.addComponentWidths(cw);
-
-        //Iterate Graph processing nodes..
-        for (Node<?, ?> node : graph.nodes()) {
-            if (node.getContent() instanceof View<?>) {
-                final View<?> view = (View<?>) node.getContent();
-                if (view.getDefinition() instanceof DRGElement) {
-                    final DRGElement drgElement = (DRGElement) view.getDefinition();
-                    if (!drgElement.isAllowOnlyVisualChange()) {
-                        nodes.put(drgElement.getId().getValue(),
-                                  stunnerToDMN(node,
-                                               componentWidthsConsumer));
-                    }
-
-                    final String namespaceURI = definitionsStunnerPojo.getDefaultNamespace();
-                    dmnDDDMNDiagram.addDMNDiagramElement(WrapperUtils.getWrappedJSIDMNShape(definitionsStunnerPojo,
-                                                                                            (View<? extends DMNElement>) view,
-                                                                                            namespaceURI));
-                } else if (view.getDefinition() instanceof TextAnnotation) {
-                    final TextAnnotation textAnnotation = (TextAnnotation) view.getDefinition();
-                    textAnnotations.put(textAnnotation.getId().getValue(),
-                                        textAnnotationConverter.dmnFromNode((Node<View<TextAnnotation>, ?>) node,
-                                                                            componentWidthsConsumer));
-                    final String namespaceURI = definitionsStunnerPojo.getDefaultNamespace();
-                    dmnDDDMNDiagram.addDMNDiagramElement(WrapperUtils.getWrappedJSIDMNShape(definitionsStunnerPojo,
-                                                                                            (View<? extends DMNElement>) view,
-                                                                                            namespaceURI));
-
-                    final List<JSITAssociation> associations = AssociationConverter.dmnFromWB((Node<View<TextAnnotation>, ?>) node);
-                    for (int i = 0; i < associations.size(); i++) {
-                        final JSITAssociation wrappedJSITAssociation = WrapperUtils.getWrappedJSITAssociation(Js.uncheckedCast(associations.get(i)));
-                        definitions.addArtifact(wrappedJSITAssociation);
-                    }
-                }
-
-                // DMNDI Edge management.
-                final List<Edge<?, ?>> inEdges = (List<Edge<?, ?>>) node.getInEdges();
-                for (Edge<?, ?> e : inEdges) {
-                    if (e.getContent() instanceof ViewConnector) {
-                        final ViewConnector connectionContent = (ViewConnector) e.getContent();
-                        if (connectionContent.getSourceConnection().isPresent() && connectionContent.getTargetConnection().isPresent()) {
-                            Point2D sourcePoint = ((Connection) connectionContent.getSourceConnection().get()).getLocation();
-                            Point2D targetPoint = ((Connection) connectionContent.getTargetConnection().get()).getLocation();
-                            final Node<?, ?> sourceNode = e.getSourceNode();
-                            final View<?> sourceView = (View<?>) sourceNode.getContent();
-                            double xSource = xOfBound(upperLeftBound(sourceView));
-                            double ySource = yOfBound(upperLeftBound(sourceView));
-                            double xTarget = xOfBound(upperLeftBound(view));
-                            double yTarget = yOfBound(upperLeftBound(view));
-                            if (Objects.isNull(sourcePoint)) {
-                                // If the "connection source/target location is null" assume it's the centre of the shape.
-                                if (sourceView.getDefinition() instanceof DMNViewDefinition) {
-                                    DMNViewDefinition dmnViewDefinition = (DMNViewDefinition) sourceView.getDefinition();
-                                    xSource += dmnViewDefinition.getDimensionsSet().getWidth().getValue() / 2;
-                                    ySource += dmnViewDefinition.getDimensionsSet().getHeight().getValue() / 2;
-                                }
-                                sourcePoint = Point2D.create(xSource, ySource);
-                            } else {
-                                // If it is non-null it is relative to the source/target shape location.
-                                sourcePoint = Point2D.create(xSource + sourcePoint.getX(), ySource + sourcePoint.getY());
-                            }
-                            if (Objects.isNull(targetPoint)) {
-                                // If the "connection source/target location is null" assume it's the centre of the shape.
-                                if (view.getDefinition() instanceof DMNViewDefinition) {
-                                    DMNViewDefinition dmnViewDefinition = (DMNViewDefinition) view.getDefinition();
-                                    xTarget += dmnViewDefinition.getDimensionsSet().getWidth().getValue() / 2;
-                                    yTarget += dmnViewDefinition.getDimensionsSet().getHeight().getValue() / 2;
-                                }
-                                targetPoint = Point2D.create(xTarget, yTarget);
-                            } else {
-                                // If it is non-null it is relative to the source/target shape location.
-                                targetPoint = Point2D.create(xTarget + targetPoint.getX(), yTarget + targetPoint.getY());
-                            }
-
-                            final JSIDMNEdge dmnEdge = new JSIDMNEdge();
-                            // DMNDI edge elementRef is uuid of Stunner edge,
-                            // with the only exception when edge contains as content a DMN Association (Association is an edge)
-                            String uuid = e.getUUID();
-                            if (e.getContent() instanceof View<?>) {
-                                final View<?> edgeView = (View<?>) e.getContent();
-                                if (edgeView.getDefinition() instanceof Association) {
-                                    uuid = ((Association) edgeView.getDefinition()).getId().getValue();
-                                }
-                            }
-                            dmnEdge.setId("dmnedge-" + uuid);
-                            final String namespaceURI = definitionsStunnerPojo.getDefaultNamespace();
-                            dmnEdge.setDmnElementRef(new QName(namespaceURI,
-                                                               uuid,
-                                                               XMLConstants.DEFAULT_NS_PREFIX));
-                            dmnEdge.addWaypoint(PointUtils.point2dToDMNDIPoint(sourcePoint));
-                            for (ControlPoint cp : connectionContent.getControlPoints()) {
-                                dmnEdge.addWaypoint(PointUtils.point2dToDMNDIPoint(cp.getLocation()));
-                            }
-                            dmnEdge.addWaypoint(PointUtils.point2dToDMNDIPoint(targetPoint));
-                            dmnEdges.add(dmnEdge);
-                        }
-                    }
-                }
-            }
-        }
-        nodes.values().forEach(n -> {
-            JSINodeLocalPartName localPart = JSINodeLocalPartName.UNKNOWN;
-            if (JSITBusinessKnowledgeModel.instanceOf(n)) {
-                localPart = JSINodeLocalPartName.BUSINESS_KNOWLEDGE_MODEL;
-            } else if (JSITDecision.instanceOf(n)) {
-                localPart = JSINodeLocalPartName.DECISION;
-            } else if (JSITDecisionService.instanceOf(n)) {
-                localPart = JSINodeLocalPartName.DECISION_SERVICE;
-            } else if (JSITInputData.instanceOf(n)) {
-                localPart = JSINodeLocalPartName.INPUT_DATA;
-            } else if (JSITKnowledgeSource.instanceOf(n)) {
-                localPart = JSINodeLocalPartName.KNOWLEDGE_SOURCE;
-            }
-            final JSITDRGElement toAdd = WrapperUtils.getWrappedJSITDRGElement(n, PREFIX, localPart.getLocalPart());
-            definitions.addDrgElement(toAdd);
-        });
-        textAnnotations.values().forEach(text -> {
-            final JSITTextAnnotation wrappedText = WrapperUtils.getWrappedJSITTextAnnotation(text);
-            definitions.addArtifact(wrappedText);
-        });
-        for (int i = 0; i < dmnEdges.size(); i++) {
-            dmnDDDMNDiagram.addDMNDiagramElement(WrapperUtils.getWrappedJSIDMNEdge(Js.uncheckedCast(dmnEdges.get(i))));
-        }
         return definitions;
     }
 

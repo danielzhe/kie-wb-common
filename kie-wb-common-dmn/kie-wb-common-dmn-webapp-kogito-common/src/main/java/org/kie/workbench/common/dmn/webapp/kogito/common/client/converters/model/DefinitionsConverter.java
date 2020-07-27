@@ -23,11 +23,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 
 import jsinterop.base.Js;
+import org.kie.workbench.common.dmn.api.definition.model.DMNDiagramElement;
 import org.kie.workbench.common.dmn.api.definition.model.DMNModelInstrumentedBase;
 import org.kie.workbench.common.dmn.api.definition.model.Definitions;
 import org.kie.workbench.common.dmn.api.definition.model.Import;
@@ -41,8 +43,12 @@ import org.kie.workbench.common.dmn.webapp.kogito.common.client.converters.utils
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITDefinitions;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITImport;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITItemDefinition;
+import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmndi12.JSIDMNDI;
+import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmndi12.JSIDMNDiagram;
 import org.kie.workbench.common.stunner.core.util.StringUtils;
 import org.kie.workbench.common.stunner.core.util.UUID;
+
+import static org.kie.workbench.common.dmn.webapp.kogito.common.client.common.JsInteropHelpers.forEach;
 
 public class DefinitionsConverter {
 
@@ -57,12 +63,14 @@ public class DefinitionsConverter {
         final String namespace = dmn.getNamespace();
         final Description description = DescriptionPropertyConverter.wbFromDMN(dmn.getDescription());
         final Definitions result = new Definitions();
+
         result.setId(id);
         result.setName(name);
         result.setNamespace(new Text(namespace));
         result.getNsContext().putIfAbsent(DMNModelInstrumentedBase.Namespace.DEFAULT.getPrefix(), namespace);
         result.setExpressionLanguage(ExpressionLanguagePropertyConverter.wbFromDMN(dmn.getExpressionLanguage()));
         result.setTypeLanguage(dmn.getTypeLanguage());
+        result.setDmnDiagramElements(getDMNDiagramElements(dmn));
         result.setDescription(description);
 
         final Map<String, String> namespaces = NameSpaceUtils.extractNamespacesKeyedByPrefix(dmn);
@@ -120,13 +128,20 @@ public class DefinitionsConverter {
         // TODO currently DMN wb UI does not offer feature to set these required DMN properties, setting some hardcoded defaults for now.
         final String defaultId = Objects.nonNull(wb.getId()) ? wb.getId().getValue() : UUID.uuid();
         final String defaultName = Objects.nonNull(wb.getName()) ? wb.getName().getValue() : UUID.uuid(8);
+        final JSIDMNDI dmnDMNDI = new JSIDMNDI();
         final String defaultNamespace = !StringUtils.isEmpty(wb.getNamespace().getValue())
                 ? wb.getNamespace().getValue()
                 : DMNModelInstrumentedBase.Namespace.DEFAULT.getUri() + UUID.uuid();
 
+        result.setDMNDI(dmnDMNDI);
         result.setId(defaultId);
         result.setName(defaultName);
         result.setNamespace(defaultNamespace);
+
+        final List<DMNDiagramElement> dmnDiagramElements = wb.getDmnDiagramElements();
+        final List<JSIDMNDiagram> jsidmnDiagrams = getJSIDMNDiagrams(dmnDiagramElements);
+        dmnDMNDI.setDMNDiagram(jsidmnDiagrams);
+
         final Optional<String> description = Optional.ofNullable(DescriptionPropertyConverter.dmnFromWB(wb.getDescription()));
         description.ifPresent(result::setDescription);
         final String typeLanguage = wb.getTypeLanguage();
@@ -182,5 +197,32 @@ public class DefinitionsConverter {
         }
 
         return result;
+    }
+
+    private static List<JSIDMNDiagram> getJSIDMNDiagrams(final List<DMNDiagramElement> dmnDiagramElements) {
+        return dmnDiagramElements
+                .stream()
+                .map(dmnDiagramElement -> {
+                    final JSIDMNDiagram diagram = new JSIDMNDiagram();
+                    diagram.setId(dmnDiagramElement.getId().getValue());
+                    diagram.setName(dmnDiagramElement.getName().getValue());
+                    return diagram;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private static List<DMNDiagramElement> getDMNDiagramElements(final JSITDefinitions definitions) {
+
+        final List<DMNDiagramElement> dmnDiagramElements = new ArrayList<>();
+        final List<JSIDMNDiagram> dmnDiagrams = definitions.getDMNDI().getDMNDiagram();
+
+        forEach(dmnDiagrams,
+                dmnDiagram -> {
+                    final Id id = new Id(dmnDiagram.getId());
+                    dmnDiagramElements.add(new DMNDiagramElement(id,
+                                                                 new Name(dmnDiagram.getName())));
+                });
+
+        return dmnDiagramElements;
     }
 }

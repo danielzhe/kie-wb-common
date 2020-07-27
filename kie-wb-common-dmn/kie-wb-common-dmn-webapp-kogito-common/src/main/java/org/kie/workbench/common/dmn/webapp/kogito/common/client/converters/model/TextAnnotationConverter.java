@@ -17,10 +17,9 @@
 package org.kie.workbench.common.dmn.webapp.kogito.common.client.converters.model;
 
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.kie.workbench.common.dmn.api.definition.HasComponentWidths;
+import jsinterop.base.Js;
 import org.kie.workbench.common.dmn.api.definition.model.TextAnnotation;
 import org.kie.workbench.common.dmn.api.property.background.BackgroundSet;
 import org.kie.workbench.common.dmn.api.property.dimensions.GeneralRectangleDimensionsSet;
@@ -29,6 +28,7 @@ import org.kie.workbench.common.dmn.api.property.dmn.Id;
 import org.kie.workbench.common.dmn.api.property.dmn.Text;
 import org.kie.workbench.common.dmn.api.property.dmn.TextFormat;
 import org.kie.workbench.common.dmn.api.property.font.FontSet;
+import org.kie.workbench.common.dmn.webapp.kogito.common.client.converters.stunner.NodeEntry;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITTextAnnotation;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.kie.JSITComponentWidths;
 import org.kie.workbench.common.stunner.core.api.FactoryManager;
@@ -48,10 +48,12 @@ public class TextAnnotationConverter implements NodeConverter<JSITTextAnnotation
     }
 
     @Override
-    public Node<View<TextAnnotation>, ?> nodeFromDMN(final JSITTextAnnotation dmn,
-                                                     final BiConsumer<String, HasComponentWidths> hasComponentWidthsConsumer) {
+    public Node<View<TextAnnotation>, ?> nodeFromDMN(final NodeEntry nodeEntry) {
+
+        final JSITTextAnnotation dmn = Js.uncheckedCast(nodeEntry.getDmnElement());
+
         @SuppressWarnings("unchecked")
-        final Node<View<TextAnnotation>, ?> node = (Node<View<TextAnnotation>, ?>) factoryManager.newElement(dmn.getId(),
+        final Node<View<TextAnnotation>, ?> node = (Node<View<TextAnnotation>, ?>) factoryManager.newElement(nodeEntry.getId(),
                                                                                                              getDefinitionId(TextAnnotation.class)).asNode();
         final Id id = IdPropertyConverter.wbFromDMN(dmn.getId());
         final Description description = DescriptionPropertyConverter.wbFromDMN(dmn.getDescription());
@@ -65,6 +67,7 @@ public class TextAnnotationConverter implements NodeConverter<JSITTextAnnotation
                                                                  new FontSet(),
                                                                  new GeneralRectangleDimensionsSet());
         node.getContent().setDefinition(textAnnotation);
+//        textAnnotation.setDiagramId
         return node;
     }
 

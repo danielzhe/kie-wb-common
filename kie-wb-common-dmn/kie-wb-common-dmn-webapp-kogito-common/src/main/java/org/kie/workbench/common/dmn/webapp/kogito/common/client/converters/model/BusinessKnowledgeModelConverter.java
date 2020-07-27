@@ -20,10 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.kie.workbench.common.dmn.api.definition.HasComponentWidths;
+import jsinterop.base.Js;
 import org.kie.workbench.common.dmn.api.definition.model.BusinessKnowledgeModel;
 import org.kie.workbench.common.dmn.api.definition.model.DRGElement;
 import org.kie.workbench.common.dmn.api.definition.model.DecisionService;
@@ -37,6 +36,7 @@ import org.kie.workbench.common.dmn.api.property.dmn.Description;
 import org.kie.workbench.common.dmn.api.property.dmn.Id;
 import org.kie.workbench.common.dmn.api.property.dmn.Name;
 import org.kie.workbench.common.dmn.api.property.font.FontSet;
+import org.kie.workbench.common.dmn.webapp.kogito.common.client.converters.stunner.NodeEntry;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITAuthorityRequirement;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITBusinessKnowledgeModel;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITDMNElementReference;
@@ -63,10 +63,12 @@ public class BusinessKnowledgeModelConverter implements NodeConverter<JSITBusine
     }
 
     @Override
-    public Node<View<BusinessKnowledgeModel>, ?> nodeFromDMN(final JSITBusinessKnowledgeModel dmn,
-                                                             final BiConsumer<String, HasComponentWidths> hasComponentWidthsConsumer) {
+    public Node<View<BusinessKnowledgeModel>, ?> nodeFromDMN(final NodeEntry nodeEntry) {
+
+        final JSITBusinessKnowledgeModel dmn = Js.uncheckedCast(nodeEntry.getDmnElement());
+
         @SuppressWarnings("unchecked")
-        final Node<View<BusinessKnowledgeModel>, ?> node = (Node<View<BusinessKnowledgeModel>, ?>) factoryManager.newElement(dmn.getId(),
+        final Node<View<BusinessKnowledgeModel>, ?> node = (Node<View<BusinessKnowledgeModel>, ?>) factoryManager.newElement(nodeEntry.getId(),
                                                                                                                              getDefinitionId(BusinessKnowledgeModel.class)).asNode();
         final Id id = IdPropertyConverter.wbFromDMN(dmn.getId());
         final Description description = DescriptionPropertyConverter.wbFromDMN(dmn.getDescription());
@@ -74,7 +76,7 @@ public class BusinessKnowledgeModelConverter implements NodeConverter<JSITBusine
         final InformationItemPrimary informationItem = InformationItemPrimaryPropertyConverter.wbFromDMN(dmn.getVariable(), dmn);
         final JSITFunctionDefinition dmnFunctionDefinition = dmn.getEncapsulatedLogic();
         final FunctionDefinition functionDefinition = FunctionDefinitionPropertyConverter.wbFromDMN(dmnFunctionDefinition,
-                                                                                                    hasComponentWidthsConsumer);
+                                                                                                    nodeEntry.getComponentWidthsConsumer());
         final BusinessKnowledgeModel bkm = new BusinessKnowledgeModel(id,
                                                                       description,
                                                                       name,
@@ -83,6 +85,7 @@ public class BusinessKnowledgeModelConverter implements NodeConverter<JSITBusine
                                                                       new BackgroundSet(),
                                                                       new FontSet(),
                                                                       new GeneralRectangleDimensionsSet());
+        bkm.setDmnDiagramId(nodeEntry.getDiagramId());
         node.getContent().setDefinition(bkm);
 
         if (Objects.nonNull(informationItem)) {
@@ -93,8 +96,8 @@ public class BusinessKnowledgeModelConverter implements NodeConverter<JSITBusine
         }
 
         if (Objects.nonNull(dmnFunctionDefinition)) {
-            hasComponentWidthsConsumer.accept(dmnFunctionDefinition.getId(),
-                                              functionDefinition);
+            nodeEntry.getComponentWidthsConsumer().accept(dmnFunctionDefinition.getId(),
+                                                          functionDefinition);
         }
 
         DMNExternalLinksToExtensionElements.loadExternalLinksFromExtensionElements(dmn, bkm);

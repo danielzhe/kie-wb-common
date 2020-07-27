@@ -16,19 +16,17 @@
 
 package org.kie.workbench.common.dmn.webapp.kogito.common.client.converters.model;
 
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.kie.workbench.common.dmn.api.definition.HasComponentWidths;
 import org.kie.workbench.common.dmn.api.definition.model.DMNModelInstrumentedBase;
+import org.kie.workbench.common.dmn.webapp.kogito.common.client.converters.stunner.NodeEntry;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.kie.JSITComponentWidths;
 import org.kie.workbench.common.stunner.core.graph.Node;
 import org.kie.workbench.common.stunner.core.graph.content.view.View;
 
-interface NodeConverter<D, W extends DMNModelInstrumentedBase> {
+public interface NodeConverter<D, W extends DMNModelInstrumentedBase> {
 
-    Node<View<W>, ?> nodeFromDMN(final D source,
-                                 final BiConsumer<String, HasComponentWidths> hasComponentWidthsConsumer);
+    Node<View<W>, ?> nodeFromDMN(final NodeEntry nodeEntry);
 
     D dmnFromNode(final Node<View<W>, ?> source,
                   final Consumer<JSITComponentWidths> componentWidthsConsumer);

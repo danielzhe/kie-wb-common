@@ -20,11 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import jsinterop.base.Js;
-import org.kie.workbench.common.dmn.api.definition.HasComponentWidths;
 import org.kie.workbench.common.dmn.api.definition.model.BusinessKnowledgeModel;
 import org.kie.workbench.common.dmn.api.definition.model.DRGElement;
 import org.kie.workbench.common.dmn.api.definition.model.Decision;
@@ -42,6 +40,7 @@ import org.kie.workbench.common.dmn.api.property.dmn.Id;
 import org.kie.workbench.common.dmn.api.property.dmn.Name;
 import org.kie.workbench.common.dmn.api.property.dmn.Question;
 import org.kie.workbench.common.dmn.api.property.font.FontSet;
+import org.kie.workbench.common.dmn.webapp.kogito.common.client.converters.stunner.NodeEntry;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITAuthorityRequirement;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITDMNElementReference;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITDecision;
@@ -72,10 +71,12 @@ public class DecisionConverter implements NodeConverter<JSITDecision, org.kie.wo
     }
 
     @Override
-    public Node<View<Decision>, ?> nodeFromDMN(final JSITDecision dmn,
-                                               final BiConsumer<String, HasComponentWidths> hasComponentWidthsConsumer) {
+    public Node<View<Decision>, ?> nodeFromDMN(final NodeEntry nodeEntry) {
+
+        final JSITDecision dmn = Js.uncheckedCast(nodeEntry.getDmnElement());
+
         @SuppressWarnings("unchecked")
-        final Node<View<Decision>, ?> node = (Node<View<Decision>, ?>) factoryManager.newElement(dmn.getId(),
+        final Node<View<Decision>, ?> node = (Node<View<Decision>, ?>) factoryManager.newElement(nodeEntry.getId(),
                                                                                                  getDefinitionId(Decision.class)).asNode();
         final Id id = IdPropertyConverter.wbFromDMN(dmn.getId());
         final Description description = DescriptionPropertyConverter.wbFromDMN(dmn.getDescription());
@@ -88,7 +89,7 @@ public class DecisionConverter implements NodeConverter<JSITDecision, org.kie.wo
             final JSITExpression jsiExpression = Js.uncheckedCast(JsUtils.getUnwrappedElement(jsiWrapped));
             expression = ExpressionPropertyConverter.wbFromDMN(jsiExpression,
                                                                Js.uncheckedCast(dmn),
-                                                               hasComponentWidthsConsumer);
+                                                               nodeEntry.getComponentWidthsConsumer());
         }
 
         final Decision decision = new Decision(id,
@@ -101,6 +102,7 @@ public class DecisionConverter implements NodeConverter<JSITDecision, org.kie.wo
                                                new BackgroundSet(),
                                                new FontSet(),
                                                new GeneralRectangleDimensionsSet());
+        decision.setDmnDiagramId(nodeEntry.getDiagramId());
         decision.setQuestion(QuestionPropertyConverter.wbFromDMN(dmn.getQuestion()));
         decision.setAllowedAnswers(AllowedAnswersPropertyConverter.wbFromDMN(dmn.getAllowedAnswers()));
         node.getContent().setDefinition(decision);

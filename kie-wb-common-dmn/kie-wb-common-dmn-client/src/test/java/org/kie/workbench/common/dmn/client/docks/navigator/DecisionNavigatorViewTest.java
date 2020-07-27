@@ -55,7 +55,7 @@ public class DecisionNavigatorViewTest {
 
     @Before
     public void setup() {
-        view = spy(new DecisionNavigatorView(divMainTree, decisionComponentsContainer, decisionComponents));
+        view = null; //spy(new DecisionNavigatorView(null, null, null, null, null, divMainTree, decisionComponentsContainer, decisionComponents, null));
     }
 
     @Test

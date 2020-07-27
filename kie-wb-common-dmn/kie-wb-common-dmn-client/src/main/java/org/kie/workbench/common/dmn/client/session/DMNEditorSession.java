@@ -111,6 +111,7 @@ public class DMNEditorSession extends DefaultEditorSession implements DMNSession
                            .registerCanvasControl(CellEditorControl.class)
                            .registerCanvasControl(MousePanMediatorControl.class)
                            .registerCanvasControl(DMNGridPanelControl.class)
+                           .registerCanvasControl(MultiDRDControl.class)
                            .registerCanvasControl(ExpressionEditorControl.class),
                    metadata,
                    callback);

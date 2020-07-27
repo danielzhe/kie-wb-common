@@ -18,10 +18,9 @@ package org.kie.workbench.common.dmn.webapp.kogito.common.client.converters.mode
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.kie.workbench.common.dmn.api.definition.HasComponentWidths;
+import jsinterop.base.Js;
 import org.kie.workbench.common.dmn.api.definition.model.InformationItemPrimary;
 import org.kie.workbench.common.dmn.api.definition.model.InputData;
 import org.kie.workbench.common.dmn.api.property.background.BackgroundSet;
@@ -30,6 +29,7 @@ import org.kie.workbench.common.dmn.api.property.dmn.Description;
 import org.kie.workbench.common.dmn.api.property.dmn.Id;
 import org.kie.workbench.common.dmn.api.property.dmn.Name;
 import org.kie.workbench.common.dmn.api.property.font.FontSet;
+import org.kie.workbench.common.dmn.webapp.kogito.common.client.converters.stunner.NodeEntry;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITInformationItem;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.dmn12.JSITInputData;
 import org.kie.workbench.common.dmn.webapp.kogito.marshaller.js.model.kie.JSITComponentWidths;
@@ -50,10 +50,12 @@ public class InputDataConverter implements NodeConverter<JSITInputData, InputDat
     }
 
     @Override
-    public Node<View<InputData>, ?> nodeFromDMN(final JSITInputData dmn,
-                                                final BiConsumer<String, HasComponentWidths> hasComponentWidthsConsumer) {
+    public Node<View<InputData>, ?> nodeFromDMN(final NodeEntry nodeEntry) {
+
+        final JSITInputData dmn = Js.uncheckedCast(nodeEntry.getDmnElement());
+
         @SuppressWarnings("unchecked")
-        final Node<View<InputData>, ?> node = (Node<View<InputData>, ?>) factoryManager.newElement(dmn.getId(),
+        final Node<View<InputData>, ?> node = (Node<View<InputData>, ?>) factoryManager.newElement(nodeEntry.getId(),
                                                                                                    getDefinitionId(InputData.class)).asNode();
         final Id id = IdPropertyConverter.wbFromDMN(dmn.getId());
         final Description description = DescriptionPropertyConverter.wbFromDMN(dmn.getDescription());
@@ -67,6 +69,7 @@ public class InputDataConverter implements NodeConverter<JSITInputData, InputDat
                                                   new BackgroundSet(),
                                                   new FontSet(),
                                                   new GeneralRectangleDimensionsSet());
+        inputData.setDmnDiagramId(nodeEntry.getDiagramId());
         node.getContent().setDefinition(inputData);
 
         if (Objects.nonNull(informationItem)) {

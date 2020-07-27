@@ -44,6 +44,8 @@ public abstract class DRGElement extends NamedElement implements DynamicReadOnly
 
     protected boolean allowOnlyVisualChange;
 
+    private String dmnDiagramId;
+
     @Property
     @FormField(afterElement = "description", type = DocumentationLinksFieldType.class)
     @Valid
@@ -83,6 +85,14 @@ public abstract class DRGElement extends NamedElement implements DynamicReadOnly
         }
 
         return ReadOnly.FALSE;
+    }
+
+    public String getDmnDiagramId() {
+        return dmnDiagramId;
+    }
+
+    public void setDmnDiagramId(final String dmnDiagramId) {
+        this.dmnDiagramId = dmnDiagramId;
     }
 
     protected boolean isReadonlyField(final String fieldName) {
