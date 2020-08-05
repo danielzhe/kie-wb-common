@@ -35,6 +35,7 @@ import org.kie.workbench.common.dmn.client.docks.navigator.factories.DecisionNav
 import org.kie.workbench.common.dmn.client.docks.navigator.included.components.DecisionComponents;
 import org.kie.workbench.common.dmn.client.docks.navigator.tree.DecisionNavigatorTreePresenter;
 import org.kie.workbench.common.stunner.core.client.canvas.CanvasHandler;
+import org.kie.workbench.common.stunner.core.client.canvas.event.registration.CanvasElementAddedEvent;
 import org.kie.workbench.common.stunner.core.diagram.Diagram;
 import org.kie.workbench.common.stunner.core.graph.Edge;
 import org.kie.workbench.common.stunner.core.graph.Element;
@@ -123,6 +124,10 @@ public class DecisionNavigatorPresenter {
     }
 
     public void onRefreshDecisionComponents(final @Observes RefreshDecisionComponents events) {
+        refreshComponentsView();
+    }
+
+    public void onElementAdded(final @Observes CanvasElementAddedEvent event) {
         refreshComponentsView();
     }
 

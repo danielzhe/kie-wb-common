@@ -22,6 +22,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 import elemental2.dom.DomGlobal;
@@ -41,6 +43,7 @@ import org.kie.workbench.common.stunner.core.graph.Node;
 import org.kie.workbench.common.stunner.core.graph.content.definition.Definition;
 import org.kie.workbench.common.stunner.svg.client.shape.view.impl.SVGShapeViewImpl;
 
+@ApplicationScoped
 public class GraphDRDSwitchPOC {
 
     @Inject
@@ -48,6 +51,11 @@ public class GraphDRDSwitchPOC {
 
     @Inject
     private TextPropertyProviderFactory textPropertyProviderFactory;
+
+    @Inject
+    private Event<DRDSelectedEvent> drdSelectedEvent;
+
+    private DMNDiagramElement selectedDMNDiagram;
 
     private List<DRDNode> repositoryOfNodes = new ArrayList<>();
 
@@ -111,20 +119,21 @@ public class GraphDRDSwitchPOC {
     }
 
     public List<DRDNode> getGlobalRepositoryOfNodes() {
-        if (repositoryOfNodes.isEmpty()) {
-            final CanvasHandlerImpl canvasHandler = (CanvasHandlerImpl) dmnGraphUtils.getCanvasHandler();
-            final AbstractCanvas canvas = canvasHandler.getCanvas();
+        repositoryOfNodes.clear();
 
-            getGraphNodes().forEach(e -> {
-                final DRDNode drdNode = new DRDNode();
-                drdNode.node = e;
-                drdNode.uuid = e.getUUID();
-                drdNode.name = getName(e);
-                drdNode.content = e.getContent();
-                drdNode.shape = canvas.getShape(e.getUUID());
-                repositoryOfNodes.add(drdNode);
-            });
-        }
+        final CanvasHandlerImpl canvasHandler = (CanvasHandlerImpl) dmnGraphUtils.getCanvasHandler();
+        final AbstractCanvas canvas = canvasHandler.getCanvas();
+
+        getGraphNodes().forEach(e -> {
+            final DRDNode drdNode = new DRDNode();
+            drdNode.node = e;
+            drdNode.uuid = e.getUUID();
+            drdNode.name = getName(e);
+            drdNode.content = e.getContent();
+            drdNode.shape = canvas.getShape(e.getUUID());
+            repositoryOfNodes.add(drdNode);
+        });
+
         return repositoryOfNodes;
     }
 
@@ -133,6 +142,8 @@ public class GraphDRDSwitchPOC {
     }
 
     public void show(final DMNDiagramElement drd) {
+        selectedDMNDiagram = drd;
+        drdSelectedEvent.fire(new DRDSelectedEvent(drd));
         final String drdId = drd.getId().getValue();
         final Stream<Node> nodeStream = dmnGraphUtils.getNodeStream();
 
@@ -172,6 +183,10 @@ public class GraphDRDSwitchPOC {
             }
             view.onResize();
         });
+    }
+
+    public DMNDiagramElement getSelectedDMNDiagram() {
+        return selectedDMNDiagram;
     }
 
     class DRDNode {

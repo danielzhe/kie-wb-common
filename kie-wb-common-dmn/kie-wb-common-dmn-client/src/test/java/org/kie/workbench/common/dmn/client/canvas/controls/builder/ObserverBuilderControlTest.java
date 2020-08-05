@@ -23,12 +23,15 @@ import org.kie.workbench.common.dmn.api.definition.HasExpression;
 import org.kie.workbench.common.dmn.api.definition.HasName;
 import org.kie.workbench.common.dmn.api.definition.HasVariable;
 import org.kie.workbench.common.dmn.api.definition.model.BusinessKnowledgeModel;
+import org.kie.workbench.common.dmn.api.definition.model.DMNDiagramElement;
 import org.kie.workbench.common.dmn.api.definition.model.DMNElement;
+import org.kie.workbench.common.dmn.api.definition.model.DRGElement;
 import org.kie.workbench.common.dmn.api.definition.model.Expression;
 import org.kie.workbench.common.dmn.api.definition.model.FunctionDefinition;
 import org.kie.workbench.common.dmn.api.definition.model.IsInformationItem;
 import org.kie.workbench.common.dmn.api.property.dmn.Id;
 import org.kie.workbench.common.dmn.api.property.dmn.Name;
+import org.kie.workbench.common.dmn.client.docks.navigator.GraphDRDSwitchPOC;
 import org.kie.workbench.common.forms.adf.definitions.DynamicReadOnly;
 import org.kie.workbench.common.stunner.core.graph.Element;
 import org.kie.workbench.common.stunner.core.graph.content.view.View;
@@ -180,5 +183,29 @@ public class ObserverBuilderControlTest {
         observerBuilderControl.updateElementFromDefinition(element, hasVariable);
 
         verify(newHasVariable).setVariable(isInformationItem);
+    }
+
+    @Test
+    public void testUpdateDMNDiagramIdFromSelectedDMNDiagram() {
+
+        final DRGElement newDefinition = mock(DRGElement.class);
+        final Element element = mock(Element.class);
+        final View elementContent = mock(View.class);
+        final Object definition = mock(Object.class);
+        final String selectedDiagramId = "selected diagram id";
+        final GraphDRDSwitchPOC graphDRDSwitchPOC = mock(GraphDRDSwitchPOC.class);
+        final DMNDiagramElement selectedDiagram = mock(DMNDiagramElement.class);
+        final Id id = mock(Id.class);
+
+        when(id.getValue()).thenReturn(selectedDiagramId);
+        when(selectedDiagram.getId()).thenReturn(id);
+        when(graphDRDSwitchPOC.getSelectedDMNDiagram()).thenReturn(selectedDiagram);
+        when(observerBuilderControl.getGraphDRDSwitchPOC()).thenReturn(graphDRDSwitchPOC);
+        when(elementContent.getDefinition()).thenReturn(newDefinition);
+        when(element.getContent()).thenReturn(elementContent);
+
+        observerBuilderControl.updateElementFromDefinition(element, definition);
+
+        verify(newDefinition).setDmnDiagramId(selectedDiagramId);
     }
 }
