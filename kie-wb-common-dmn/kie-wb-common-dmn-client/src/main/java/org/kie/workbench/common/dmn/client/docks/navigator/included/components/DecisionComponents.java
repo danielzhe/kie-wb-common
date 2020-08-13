@@ -122,7 +122,7 @@ public class DecisionComponents {
                         final Object definition = ((Definition) content).getDefinition();
                         if (definition instanceof DRGElement) {
                             final DRGElement drgElement = (DRGElement) definition;
-                            final String dmnDiagramId = drgElement.getDMNDiagramId();
+                            final String dmnDiagramId = drgElement.getDiagramId();
 
                             if (Objects.equals(dmnDiagramId, drdId)) {
                                 final DecisionComponent decisionComponent = makeDecisionComponent(dmnDiagramId,

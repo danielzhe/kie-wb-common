@@ -351,8 +351,8 @@ public class DecisionComponentsTest {
         when(node2.getContent()).thenReturn(node2Content);
         when(node1Content.getDefinition()).thenReturn(node1DRGElement);
         when(node2Content.getDefinition()).thenReturn(node2DRGElement);
-        when(node1DRGElement.getDMNDiagramId()).thenReturn(id);
-        when(node2DRGElement.getDMNDiagramId()).thenReturn(id);
+        when(node1DRGElement.getDiagramId()).thenReturn(id);
+        when(node2DRGElement.getDiagramId()).thenReturn(id);
         doReturn(decisionComponent1).when(decisionComponents).makeDecisionComponent(id, node1DRGElement);
         doReturn(decisionComponent2).when(decisionComponents).makeDecisionComponent(id, node2DRGElement);
         when(view.getComponentsCounter()).thenReturn(existingComponentsCounter);

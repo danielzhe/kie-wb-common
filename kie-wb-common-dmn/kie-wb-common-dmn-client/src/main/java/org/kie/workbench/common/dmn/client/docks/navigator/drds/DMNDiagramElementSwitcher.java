@@ -38,12 +38,13 @@ import org.kie.workbench.common.stunner.core.client.canvas.AbstractCanvasView;
 import org.kie.workbench.common.stunner.core.client.canvas.CanvasHandlerImpl;
 import org.kie.workbench.common.stunner.core.client.shape.Shape;
 import org.kie.workbench.common.stunner.core.client.shape.view.ShapeView;
+import org.kie.workbench.common.stunner.core.diagram.SelectedDiagramProvider;
 import org.kie.workbench.common.stunner.core.graph.Edge;
 import org.kie.workbench.common.stunner.core.graph.Node;
 import org.kie.workbench.common.stunner.core.graph.content.definition.Definition;
 
 @ApplicationScoped
-public class DMNDiagramElementSwitcher {
+public class DMNDiagramElementSwitcher implements SelectedDiagramProvider {
 
     private final DMNGraphUtils dmnGraphUtils;
 
@@ -130,7 +131,7 @@ public class DMNDiagramElementSwitcher {
 
             if (definition instanceof DRGElement) {
                 final DRGElement drgElement = (DRGElement) definition;
-                return Optional.of(drgElement.getDMNDiagramId());
+                return Optional.of(drgElement.getDiagramId());
             }
 
             if (definition instanceof TextAnnotation) {
@@ -149,5 +150,19 @@ public class DMNDiagramElementSwitcher {
     @SuppressWarnings("unchecked")
     private List<Edge> getOutEdges(final Node node) {
         return (List<Edge>) node.getOutEdges();
+    }
+
+    @Override
+    public boolean isGlobalGraph() {
+        return getCurrentDMNDiagramElement().isPresent() &&
+                Objects.equals(getCurrentDMNDiagramElement().get().getName().getValue(), "DRG");
+    }
+
+    @Override
+    public String getSelectedDiagramId() {
+        if (getCurrentDMNDiagramElement().isPresent()) {
+            return getCurrentDMNDiagramElement().get().getId().getValue();
+        }
+        return null;
     }
 }

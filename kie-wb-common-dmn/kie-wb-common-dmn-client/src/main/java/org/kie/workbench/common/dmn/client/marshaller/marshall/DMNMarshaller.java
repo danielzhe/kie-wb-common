@@ -179,7 +179,7 @@ public class DMNMarshaller {
                     if (view.getDefinition() instanceof DRGElement) {
 
                         final DRGElement drgElement = (DRGElement) view.getDefinition();
-                        final String dmnDiagramId = drgElement.getDMNDiagramId();
+                        final String dmnDiagramId = drgElement.getDiagramId();
 
                         if (Objects.equals(dmnDiagramId, id)) {
 
