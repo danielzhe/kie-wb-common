@@ -246,7 +246,8 @@ public class DMNDiagramEditorTest extends AbstractProjectDiagramEditorTest {
                                                  importsPageProvider,
                                                  editorSearchIndex,
                                                  searchBarComponent,
-                                                 feelInitializer) {
+                                                 feelInitializer,
+                                                 null) {
             {
                 docks = DMNDiagramEditorTest.this.docks;
                 fileMenuBuilder = DMNDiagramEditorTest.this.fileMenuBuilder;

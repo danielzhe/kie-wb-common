@@ -35,6 +35,7 @@ import org.jboss.errai.common.client.api.Caller;
 import org.jboss.errai.common.client.ui.ElementWrapperWidget;
 import org.jboss.errai.ioc.client.api.ManagedInstance;
 import org.kie.workbench.common.dmn.api.qualifiers.DMNEditor;
+import org.kie.workbench.common.dmn.client.SomeHappyComponent;
 import org.kie.workbench.common.dmn.client.commands.general.NavigateToExpressionEditorCommand;
 import org.kie.workbench.common.dmn.client.docks.navigator.DecisionNavigatorDock;
 import org.kie.workbench.common.dmn.client.editors.expressions.ExpressionEditorView;
@@ -130,6 +131,7 @@ public class DMNDiagramEditor extends AbstractProjectDiagramEditor<DMNDiagramRes
     private final DMNEditorSearchIndex editorSearchIndex;
     private final SearchBarComponent<DMNSearchableElement> searchBarComponent;
     private final MonacoFEELInitializer feelInitializer;
+    private final SomeHappyComponent someHappyComponent;
 
     @Inject
     public DMNDiagramEditor(final View view,
@@ -159,7 +161,8 @@ public class DMNDiagramEditor extends AbstractProjectDiagramEditor<DMNDiagramRes
                             final IncludedModelsPageStateProviderImpl importsPageProvider,
                             final DMNEditorSearchIndex editorSearchIndex,
                             final SearchBarComponent<DMNSearchableElement> searchBarComponent,
-                            final MonacoFEELInitializer feelInitializer) {
+                            final MonacoFEELInitializer feelInitializer,
+                            final SomeHappyComponent someHappyComponent) {
         super(view,
               xmlEditorView,
               editorSessionPresenterInstances,
@@ -188,6 +191,7 @@ public class DMNDiagramEditor extends AbstractProjectDiagramEditor<DMNDiagramRes
         this.editorSearchIndex = editorSearchIndex;
         this.searchBarComponent = searchBarComponent;
         this.feelInitializer = feelInitializer;
+        this.someHappyComponent = someHappyComponent;
     }
 
     @Override
@@ -197,6 +201,9 @@ public class DMNDiagramEditor extends AbstractProjectDiagramEditor<DMNDiagramRes
         getMenuSessionItems().setErrorConsumer(e -> hideLoadingViews());
         editorSearchIndex.setCurrentAssetHashcodeSupplier(getGetCurrentContentHashSupplier());
         editorSearchIndex.setIsDataTypesTabActiveSupplier(getIsDataTypesTabActiveSupplier());
+
+        final HTMLElement element = someHappyComponent.getElement();
+        kieView.getMultiPage().addTabBarWidget(getWidget(element));
     }
 
     @Override
@@ -339,6 +346,8 @@ public class DMNDiagramEditor extends AbstractProjectDiagramEditor<DMNDiagramRes
 
         searchBarComponent.init(editorSearchIndex);
         kieView.getMultiPage().addTabBarWidget(getWidget(element));
+
+
     }
 
     public void onDataTypePageNavTabActiveEvent(final @Observes DataTypePageTabActiveEvent event) {

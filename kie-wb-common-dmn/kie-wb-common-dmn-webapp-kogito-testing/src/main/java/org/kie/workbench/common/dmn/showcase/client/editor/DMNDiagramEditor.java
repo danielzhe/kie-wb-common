@@ -23,9 +23,11 @@ import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
+import elemental2.dom.HTMLElement;
 import org.appformer.client.context.EditorContextProvider;
 import org.jboss.errai.ioc.client.api.ManagedInstance;
 import org.kie.workbench.common.dmn.api.qualifiers.DMNEditor;
+import org.kie.workbench.common.dmn.client.SomeHappyComponent;
 import org.kie.workbench.common.dmn.client.docks.navigator.DecisionNavigatorDock;
 import org.kie.workbench.common.dmn.client.editors.expressions.ExpressionEditorView;
 import org.kie.workbench.common.dmn.client.editors.included.IncludedModelsPage;
@@ -98,6 +100,7 @@ public class DMNDiagramEditor extends AbstractDMNDiagramEditor {
 
     private final Event<NotificationEvent> notificationEvent;
     private final DMNVFSService vfsService;
+    private final SomeHappyComponent happyComponent;
 
     @Inject
     public DMNDiagramEditor(final View view,
@@ -134,7 +137,8 @@ public class DMNDiagramEditor extends AbstractDMNDiagramEditor {
                             final IncludedModelsPage includedModelsPage,
                             final IncludedModelsPageStateProviderImpl importsPageProvider,
                             final EditorContextProvider contextProvider,
-                            final GuidedTourBridgeInitializer guidedTourBridgeInitializer) {
+                            final GuidedTourBridgeInitializer guidedTourBridgeInitializer,
+                            final SomeHappyComponent happyComponent) {
         super(view,
               fileMenuBuilder,
               placeManager,
@@ -171,6 +175,7 @@ public class DMNDiagramEditor extends AbstractDMNDiagramEditor {
               guidedTourBridgeInitializer);
         this.notificationEvent = notificationEvent;
         this.vfsService = vfsService;
+        this.happyComponent = happyComponent;
     }
 
     @Override
@@ -220,6 +225,10 @@ public class DMNDiagramEditor extends AbstractDMNDiagramEditor {
             decisionNavigatorDock.reload();
             dataTypesPage.reload();
             includedModelsPage.setup(importsPageProvider.withDiagram(c.getDiagram()));
+
+
+            final HTMLElement element = happyComponent.getElement();
+            getWidget().getMultiPage().addTabBarWidget(getWidget(element));
         });
     }
 
