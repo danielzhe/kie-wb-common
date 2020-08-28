@@ -16,11 +16,13 @@
 
 package org.kie.workbench.common.dmn.client.docks.navigator.drds;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -32,12 +34,14 @@ import org.kie.workbench.common.dmn.api.definition.model.DRGElement;
 import org.kie.workbench.common.dmn.api.definition.model.Import;
 import org.kie.workbench.common.dmn.client.graph.DMNGraphUtils;
 import org.kie.workbench.common.stunner.core.diagram.Diagram;
+import org.kie.workbench.common.stunner.core.diagram.GraphsProvider;
 import org.kie.workbench.common.stunner.core.diagram.Metadata;
-import org.kie.workbench.common.stunner.core.diagram.SelectedDiagramProvider;
+import org.kie.workbench.common.stunner.core.graph.Graph;
+import org.kie.workbench.common.stunner.core.graph.Node;
 import org.uberfire.backend.vfs.Path;
 
 @ApplicationScoped
-public class DMNDiagramsSession implements SelectedDiagramProvider {
+public class DMNDiagramsSession implements GraphsProvider {
 
     private ManagedInstance<DMNDiagramsSessionState> dmnDiagramsSessionStates;
 
@@ -106,6 +110,7 @@ public class DMNDiagramsSession implements SelectedDiagramProvider {
         getSessionState().getDMNDiagramsByDiagramId().remove(diagramId);
     }
 
+    @Override
     public Diagram getDiagram(final String dmnDiagramElementId) {
         return getSessionState().getDiagram(dmnDiagramElementId);
     }
@@ -166,15 +171,25 @@ public class DMNDiagramsSession implements SelectedDiagramProvider {
     }
 
     @Override
-    public boolean isGlobalGraph() {
+    public boolean isGlobalGraphSelected() {
         return getCurrentDMNDiagramElement().isPresent() &&
                 Objects.equals(getCurrentDMNDiagramElement().get().getName().getValue(), "DRG");
     }
 
     @Override
-    public String getSelectedDiagramId() {
-        return getCurrentDMNDiagramElement()
-                .map(e -> e.getId().getValue())
-                .orElse(null);
+    public List<Graph> getGraphs() {
+        return getDMNDiagrams()
+                .stream()
+                .map(tuple -> tuple.getStunnerDiagram().getGraph())
+                .collect(Collectors.toList());
+    }
+
+    public List<Node> getAllNodes() {
+        final List<Node> result = new ArrayList<>();
+        for (final DMNDiagramTuple tuple : getDMNDiagrams()) {
+            final Diagram diagram = tuple.getStunnerDiagram();
+            result.addAll(dmnGraphUtils.getNodeStream(diagram).collect(Collectors.toList()));
+        }
+        return result;
     }
 }

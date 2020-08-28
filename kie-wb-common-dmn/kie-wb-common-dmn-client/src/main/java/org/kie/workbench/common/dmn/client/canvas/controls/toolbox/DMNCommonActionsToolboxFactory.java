@@ -59,7 +59,7 @@ public class DMNCommonActionsToolboxFactory
                                           final @Any @CommonActionsToolbox ManagedInstance<ActionsToolboxView> views,
                                           final CanvasCommandManager<AbstractCanvasHandler> commandManager,
                                           final @DMNEditor DefaultCanvasCommandFactory commandFactory,
-                                          final @Any ManagedInstance<DeleteNodeToolboxAction> deleteNodeActions) {
+                                          final @DMNEditor ManagedInstance<DeleteNodeToolboxAction> deleteNodeActions) {
         super(commandManager, commandFactory, deleteNodeActions, views);
 
         this.editDecisionToolboxActions = editDecisionToolboxActions;

@@ -16,9 +16,19 @@
 
 package org.kie.workbench.common.stunner.core.diagram;
 
-public interface SelectedDiagramProvider {
+import java.util.List;
 
-    boolean isGlobalGraph();
+import org.kie.workbench.common.stunner.core.graph.Graph;
 
-    String getSelectedDiagramId();
+public interface GraphsProvider {
+
+    boolean isGlobalGraphSelected();
+
+    //String getSelectedGraphId();
+
+    List<Graph> getGraphs();
+
+    //boolean selectedGraphContains(final String contentDefinitionId);
+
+    Diagram getDiagram(final String diagramId);
 }
