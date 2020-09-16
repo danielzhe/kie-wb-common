@@ -16,6 +16,7 @@
 
 package org.kie.workbench.common.dmn.client.session;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.enterprise.context.Dependent;
@@ -76,6 +77,24 @@ public class DMNCanvasHandler<D extends Diagram, C extends AbstractCanvas> exten
         if (element instanceof Node) {
             dmnElementsSynchronizer.synchronizeFromNode(Optional.of((Node) element));
         }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void addChild(final Element parent,
+                         final Element child) {
+        if (!isCanvasRoot(parent)) {
+            final Shape parentShape = getCanvas().getShape(parent.getUUID());
+            if (Objects.isNull(parentShape)) {
+                return;
+            }
+        }
+        superAddChild(parent, child);
+    }
+
+    void superAddChild(final Element parent,
+                       final Element child) {
+        super.addChild(parent, child);
     }
 }
 
