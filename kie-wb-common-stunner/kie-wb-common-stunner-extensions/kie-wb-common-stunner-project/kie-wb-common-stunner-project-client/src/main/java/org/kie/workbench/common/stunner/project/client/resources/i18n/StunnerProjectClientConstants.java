@@ -29,6 +29,4 @@ public class StunnerProjectClientConstants {
     public static final String DIAGRAM_EDITOR_DEFAULT_TITLE = "org.kie.workbench.common.stunner.project.client.editor.DiagramEditorDefaultTitle";
 
     public static final String DIAGRAM_PARSING_ERROR = "org.kie.workbench.common.stunner.project.client.editor.DiagramParsingError";
-
-    public static final String DOCUMENTATION = "org.kie.workbench.common.stunner.project.client.editor.Documentation";
 }
