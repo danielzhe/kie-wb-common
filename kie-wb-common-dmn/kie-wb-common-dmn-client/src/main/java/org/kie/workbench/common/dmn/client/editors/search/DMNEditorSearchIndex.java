@@ -137,6 +137,9 @@ public class DMNEditorSearchIndex extends BaseEditorSearchIndex<DMNSearchableEle
         if (Objects.isNull(session)) {
             return false;
         }
+        if (Objects.isNull(session.getExpressionEditor())) {
+            return false;
+        }
         return session.getExpressionEditor().isActive();
     }
 
