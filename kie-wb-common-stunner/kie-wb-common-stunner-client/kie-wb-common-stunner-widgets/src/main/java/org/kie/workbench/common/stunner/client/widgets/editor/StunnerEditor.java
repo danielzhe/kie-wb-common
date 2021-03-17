@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Any;
 import javax.inject.Inject;
 
 import com.google.gwt.core.client.Scheduler;
@@ -70,7 +71,7 @@ public class StunnerEditor {
     public StunnerEditor(ManagedInstance<SessionEditorPresenter<EditorSession>> editorSessionPresenterInstances,
                          ManagedInstance<SessionViewerPresenter<ViewerSession>> viewerSessionPresenterInstances,
                          ClientTranslationService translationService,
-                         ManagedInstance<TextEditorView> xmlEditorViews,
+                         @Any ManagedInstance<TextEditorView> xmlEditorViews,
                          ErrorPopupPresenter errorPopupPresenter,
                          StunnerEditorView view) {
         this.editorSessionPresenterInstances = editorSessionPresenterInstances;
@@ -178,8 +179,8 @@ public class StunnerEditor {
             xmlEditorView = xmlEditorViews.get();
             xmlEditorView.setReadOnly(isReadOnly());
             xmlEditorView.setContent(dpe.getXml(), AceEditorMode.XML);
-            view.setWidget(xmlEditorView.asWidget());
             resetContentHash();
+            view.setWidget(xmlEditorView.asWidget());
             Scheduler.get().scheduleDeferred(xmlEditorView::onResize);
         } else {
             String message = null;

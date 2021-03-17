@@ -398,6 +398,8 @@ public abstract class AbstractDMNDiagramEditorTest {
         assertThat(serviceCallback).isNotNull();
         serviceCallback.onError(clientRuntimeError);
         verify(feelInitializer, never()).initializeFEELEditor();
+        verify(multiPageEditorContainerView, times(1)).clear();
+        verify(multiPageEditorContainerView, times(1)).setEditorWidget(eq(view));
     }
 
     @Test

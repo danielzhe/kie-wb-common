@@ -482,6 +482,7 @@ public abstract class AbstractDMNDiagramEditor extends MultiPageEditorContainerP
     private void onEditorError(ClientRuntimeError error) {
         getBaseEditorView().hideBusyIndicator();
         stunnerEditor.handleError(error);
+        resetEditorPages();
     }
 
     @Override
