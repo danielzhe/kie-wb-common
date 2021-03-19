@@ -58,11 +58,13 @@ public class BPMNEditorSession extends DefaultEditorSession {
                              final CanvasCommandManager<AbstractCanvasHandler> canvasCommandManager,
                              final SessionCommandManager<AbstractCanvasHandler> sessionCommandManager,
                              final Registry<org.kie.workbench.common.stunner.core.command.Command<AbstractCanvasHandler, CanvasViolation>> commandRegistry,
+                             final Registry<org.kie.workbench.common.stunner.core.command.Command<AbstractCanvasHandler, CanvasViolation>> redoCommandRegistry,
                              final Event<RegisterChangedEvent> registerChangedEvent) {
         super(session,
               canvasCommandManager,
               sessionCommandManager,
               commandRegistry,
+              redoCommandRegistry,
               registerChangedEvent);
     }
 

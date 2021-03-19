@@ -65,18 +65,21 @@ public class DefaultEditorSession
     private final SessionCommandManager<AbstractCanvasHandler> sessionCommandManager;
     private final Registry<org.kie.workbench.common.stunner.core.command.Command<AbstractCanvasHandler, CanvasViolation>> commandRegistry;
     private final Event<RegisterChangedEvent> registerChangedEvent;
+    private final Registry<org.kie.workbench.common.stunner.core.command.Command<AbstractCanvasHandler, CanvasViolation>> redoCommandRegistry;
 
     @Inject
     public DefaultEditorSession(final ManagedSession session,
                                 final CanvasCommandManager<AbstractCanvasHandler> canvasCommandManager,
                                 final SessionCommandManager<AbstractCanvasHandler> sessionCommandManager,
                                 final Registry<org.kie.workbench.common.stunner.core.command.Command<AbstractCanvasHandler, CanvasViolation>> commandRegistry,
+                                final Registry<org.kie.workbench.common.stunner.core.command.Command<AbstractCanvasHandler, CanvasViolation>> redoCommandRegistry,
                                 final Event<RegisterChangedEvent> registerChangedEvent) {
         this.session = session;
         this.commandRegistry = commandRegistry;
         this.sessionCommandManager = sessionCommandManager;
         this.canvasCommandManager = canvasCommandManager;
         this.registerChangedEvent = registerChangedEvent;
+        this.redoCommandRegistry = redoCommandRegistry;
     }
 
     @PostConstruct
@@ -165,6 +168,11 @@ public class DefaultEditorSession
     @Override
     public Registry<org.kie.workbench.common.stunner.core.command.Command<AbstractCanvasHandler, CanvasViolation>> getCommandRegistry() {
         return commandRegistry;
+    }
+
+    @Override
+    public Registry<org.kie.workbench.common.stunner.core.command.Command<AbstractCanvasHandler, CanvasViolation>> getRedoCommandRegistry() {
+        return redoCommandRegistry;
     }
 
     @Override

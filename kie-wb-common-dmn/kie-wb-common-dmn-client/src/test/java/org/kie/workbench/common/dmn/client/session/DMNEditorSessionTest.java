@@ -63,6 +63,9 @@ public class DMNEditorSessionTest extends BaseDMNSessionTest<DMNEditorSession> {
     @Mock
     private Registry<Command<AbstractCanvasHandler, CanvasViolation>> commandRegistry;
 
+    @Mock
+    private Registry<Command<AbstractCanvasHandler, CanvasViolation>> redoCommandRegistry;
+
     private EventSourceMock<RegisterChangedEvent> registerChangedEvent = new EventSourceMock<>();
 
     @Mock
@@ -124,6 +127,7 @@ public class DMNEditorSessionTest extends BaseDMNSessionTest<DMNEditorSession> {
                                                               canvasCommandManager,
                                                               sessionCommandManager,
                                                               commandRegistry,
+                                                              redoCommandRegistry,
                                                               registerChangedEvent,
                                                               registryProvider);
         session.constructInstance();

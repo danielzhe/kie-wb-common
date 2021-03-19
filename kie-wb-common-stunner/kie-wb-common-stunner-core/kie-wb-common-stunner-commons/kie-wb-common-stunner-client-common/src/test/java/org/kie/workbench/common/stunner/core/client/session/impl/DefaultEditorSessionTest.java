@@ -73,6 +73,8 @@ public class DefaultEditorSessionTest {
     @Mock
     private Registry<org.kie.workbench.common.stunner.core.command.Command<AbstractCanvasHandler, CanvasViolation>> commandRegistry;
 
+    private Registry<org.kie.workbench.common.stunner.core.command.Command<AbstractCanvasHandler, CanvasViolation>> redoCommandRegistry;
+
     @Mock
     private Event<RegisterChangedEvent> registerChangedEvent;
 
@@ -95,6 +97,7 @@ public class DefaultEditorSessionTest {
                                           canvasCommandManager,
                                           sessionCommandManager,
                                           commandRegistry,
+                                          redoCommandRegistry,
                                           registerChangedEvent);
     }
 

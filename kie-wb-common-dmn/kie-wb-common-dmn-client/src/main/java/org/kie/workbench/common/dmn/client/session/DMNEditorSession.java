@@ -71,12 +71,14 @@ public class DMNEditorSession extends DefaultEditorSession implements DMNSession
                             final CanvasCommandManager<AbstractCanvasHandler> canvasCommandManager,
                             final SessionCommandManager<AbstractCanvasHandler> sessionCommandManager,
                             final Registry<org.kie.workbench.common.stunner.core.command.Command<AbstractCanvasHandler, CanvasViolation>> commandRegistry,
+                            final Registry<org.kie.workbench.common.stunner.core.command.Command<AbstractCanvasHandler, CanvasViolation>> redoCommandRegistry,
                             final Event<RegisterChangedEvent> registerChangedEvent,
                             final RegistryProvider registryProvider) {
         super(session,
               canvasCommandManager,
               sessionCommandManager,
               commandRegistry,
+              redoCommandRegistry,
               registerChangedEvent);
         this.registryProvider = registryProvider;
         this.registryProvider.setRegistryChangeListener(() -> fireRegistryChangedEvent());
